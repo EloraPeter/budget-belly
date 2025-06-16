@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    {
+      "source": "/**",
+      "destination": "/index.html"
+    }
+  ],
+  "ignore": ["node_modules", ".git"],
+  "port": 8080
+}

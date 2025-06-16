@@ -1,0 +1,258 @@
+[
+  {
+    "name": "Pap and Milk",
+    "painLevel": "none",
+    "budget": 800,
+    "timeToCook": 10,
+    "ingredients": ["maize flour", "milk", "water", "sugar (optional)"],
+    "tags": ["pain-safe", "low-cost", "quick", "breakfast"]
+  },
+  {
+    "name": "Boiled Yam",
+    "painLevel": "none",
+    "budget": 1000,
+    "timeToCook": 20,
+    "ingredients": ["yam", "water", "salt"],
+    "tags": ["pain-safe", "low-cost", "quick", "main"]
+  },
+  {
+    "name": "Vegetable Soup",
+    "painLevel": "mild",
+    "budget": 1500,
+    "timeToCook": 30,
+    "ingredients": ["spinach", "tomatoes", "onions", "vegetable oil", "salt"],
+    "tags": ["pain-safe", "medium-cost", "main", "vegetarian"]
+  },
+  {
+    "name": "Oatmeal Porridge",
+    "painLevel": "none",
+    "budget": 700,
+    "timeToCook": 15,
+    "ingredients": ["oats", "milk", "water", "honey"],
+    "tags": ["pain-safe", "low-cost", "quick", "breakfast"]
+  },
+  {
+    "name": "Boiled Plantain",
+    "painLevel": "none",
+    "budget": 900,
+    "timeToCook": 15,
+    "ingredients": ["plantain", "water", "salt"],
+    "tags": ["pain-safe", "low-cost", "quick", "side"]
+  },
+  {
+    "name": "Rice and Stew",
+    "painLevel": "mild",
+    "budget": 2000,
+    "timeToCook": 40,
+    "ingredients": ["rice", "tomatoes", "onions", "vegetable oil", "spices"],
+    "tags": ["pain-safe", "medium-cost", "main"]
+  },
+  {
+    "name": "Banana Smoothie",
+    "painLevel": "none",
+    "budget": 600,
+    "timeToCook": 5,
+    "ingredients": ["banana", "milk", "yogurt"],
+    "tags": ["pain-safe", "low-cost", "quick", "drink"]
+  },
+  {
+    "name": "Mashed Potatoes",
+    "painLevel": "none",
+    "budget": 1200,
+    "timeToCook": 25,
+    "ingredients": ["potatoes", "milk", "butter", "salt"],
+    "tags": ["pain-safe", "low-cost", "side"]
+  },
+  {
+    "name": "Cabbage Soup",
+    "painLevel": "mild",
+    "budget": 1000,
+    "timeToCook": 30,
+    "ingredients": ["cabbage", "carrots", "onions", "water", "salt"],
+    "tags": ["pain-safe", "low-cost", "soup"]
+  },
+  {
+    "name": "Boiled Egg Salad",
+    "painLevel": "none",
+    "budget": 800,
+    "timeToCook": 15,
+    "ingredients": ["eggs", "lettuce", "cucumber", "olive oil"],
+    "tags": ["pain-safe", "low-cost", "quick", "salad"]
+  },
+  {
+    "name": "Custard",
+    "painLevel": "none",
+    "budget": 700,
+    "timeToCook": 10,
+    "ingredients": ["custard powder", "milk", "water", "sugar"],
+    "tags": ["pain-safe", "low-cost", "quick", "dessert"]
+  },
+  {
+    "name": "Pounded Yam and Egusi",
+    "painLevel": "mild",
+    "budget": 2500,
+    "timeToCook": 45,
+    "ingredients": ["yam", "melon seeds", "spinach", "palm oil", "spices"],
+    "tags": ["pain-safe", "medium-cost", "main"]
+  },
+  {
+    "name": "Fruit Salad",
+    "painLevel": "none",
+    "budget": 1000,
+    "timeToCook": 10,
+    "ingredients": ["banana", "apple", "pineapple", "yogurt"],
+    "tags": ["pain-safe", "low-cost", "quick", "dessert"]
+  },
+  {
+    "name": "Boiled Rice",
+    "painLevel": "none",
+    "budget": 800,
+    "timeToCook": 20,
+    "ingredients": ["rice", "water", "salt"],
+    "tags": ["pain-safe", "low-cost", "quick", "main"]
+  },
+  {
+    "name": "Okra Soup",
+    "painLevel": "mild",
+    "budget": 1800,
+    "timeToCook": 35,
+    "ingredients": ["okra", "palm oil", "fish", "onions", "spices"],
+    "tags": ["pain-safe", "medium-cost", "soup"]
+  },
+  {
+    "name": "Yam Porridge",
+    "painLevel": "none",
+    "budget": 1500,
+    "timeToCook": 30,
+    "ingredients": ["yam", "tomatoes", "onions", "vegetable oil", "spices"],
+    "tags": ["pain-safe", "medium-cost", "main"]
+  },
+  {
+    "name": "Moin Moin",
+    "painLevel": "mild",
+    "budget": 1200,
+    "timeToCook": 40,
+    "ingredients": ["beans", "onions", "pepper", "vegetable oil"],
+    "tags": ["pain-safe", "low-cost", "side"]
+  },
+  {
+    "name": "Papaya Smoothie",
+    "painLevel": "none",
+    "budget": 700,
+    "timeToCook": 5,
+    "ingredients": ["papaya", "milk", "honey"],
+    "tags": ["pain-safe", "low-cost", "quick", "drink"]
+  },
+  {
+    "name": "Vegetable Stir-Fry",
+    "painLevel": "mild",
+    "budget": 1400,
+    "timeToCook": 20,
+    "ingredients": ["carrots", "cabbage", "green beans", "vegetable oil"],
+    "tags": ["pain-safe", "low-cost", "quick", "vegetarian"]
+  },
+  {
+    "name": "Boiled Sweet Potatoes",
+    "painLevel": "none",
+    "budget": 900,
+    "timeToCook": 20,
+    "ingredients": ["sweet potatoes", "water", "salt"],
+    "tags": ["pain-safe", "low-cost", "quick", "side"]
+  },
+  {
+    "name": "Pepper Soup",
+    "painLevel": "active",
+    "budget": 2000,
+    "timeToCook": 45,
+    "ingredients": ["fish", "pepper", "spices", "water"],
+    "tags": ["medium-cost", "soup"]
+  },
+  {
+    "name": "Akara",
+    "painLevel": "mild",
+    "budget": 1000,
+    "timeToCook": 30,
+    "ingredients": ["beans", "onions", "vegetable oil", "salt"],
+    "tags": ["pain-safe", "low-cost", "snack"]
+  },
+  {
+    "name": "Coconut Rice",
+    "painLevel": "mild",
+    "budget": 1800,
+    "timeToCook": 35,
+    "ingredients": ["rice", "coconut milk", "onions", "spices"],
+    "tags": ["pain-safe", "medium-cost", "main"]
+  },
+  {
+    "name": "Watermelon Juice",
+    "painLevel": "none",
+    "budget": 600,
+    "timeToCook": 5,
+    "ingredients": ["watermelon", "water", "sugar (optional)"],
+    "tags": ["pain-safe", "low-cost", "quick", "drink"]
+  },
+  {
+    "name": "Pounded Yam and Vegetable",
+    "painLevel": "mild",
+    "budget": 2200,
+    "timeToCook": 45,
+    "ingredients": ["yam", "spinach", "tomatoes", "palm oil"],
+    "tags": ["pain-safe", "medium-cost", "main"]
+  },
+  {
+    "name": "Boiled Corn",
+    "painLevel": "none",
+    "budget": 500,
+    "timeToCook": 20,
+    "ingredients": ["corn", "water", "salt"],
+    "tags": ["pain-safe", "low-cost", "quick", "snack"]
+  },
+  {
+    "name": "Bean Porridge",
+    "painLevel": "mild",
+    "budget": 1500,
+    "timeToCook": 40,
+    "ingredients": ["beans", "palm oil", "onions", "spices"],
+    "tags": ["pain-safe", "medium-cost", "main"]
+  },
+  {
+    "name": "Carrot Soup",
+    "painLevel": "none",
+    "budget": 1000,
+    "timeToCook": 30,
+    "ingredients": ["carrots", "onions", "water", "salt"],
+    "tags": ["pain-safe", "low-cost", "soup"]
+  },
+  {
+    "name": "Plantain Porridge",
+    "painLevel": "none",
+    "budget": 1400,
+    "timeToCook": 30,
+    "ingredients": ["plantain", "vegetable oil", "onions", "spices"],
+    "tags": ["pain-safe", "low-cost", "main"]
+  },
+  {
+    "name": "Cucumber Smoothie",
+    "painLevel": "none",
+    "budget": 600,
+    "timeToCook": 5,
+    "ingredients": ["cucumber", "yogurt", "honey"],
+    "tags": ["pain-safe", "low-cost", "quick", "drink"]
+  },
+  {
+    "name": "Boiled Beans",
+    "painLevel": "mild",
+    "budget": 1200,
+    "timeToCook": 45,
+    "ingredients": ["beans", "water", "salt", "onions"],
+    "tags": ["pain-safe", "low-cost", "main"]
+  },
+  {
+    "name": "Avocado Salad",
+    "painLevel": "none",
+    "budget": 900,
+    "timeToCook": 10,
+    "ingredients": ["avocado", "lettuce", "cucumber", "olive oil"],
+    "tags": ["pain-safe", "low-cost", "quick", "salad"]
+  }
+]

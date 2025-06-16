@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget Belly</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase SDK CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Favicon (optional, placeholder) -->
+  <link rel="icon" href="/public/images/favicon.ico">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body class="bg-gray-100 font-sans">
+  <!-- Navigation -->
+  <nav class="bg-teal-600 text-white p-4 sticky top-0 shadow-md">
+    <div class="container mx-auto flex justify-between items-center">
+      <!-- Logo -->
+      <div class="text-2xl font-bold">
+        <a href="/" class="hover:text-teal-200">Budget Belly</a>
+      </div>
+      <!-- Nav Links and Filter Button -->
+      <div class="hidden md:flex space-x-4 items-center">
+        <a href="/home" class="hover:text-teal-200">Home</a>
+        <a href="/favorites" class="hover:text-teal-200">Favorites</a>
+        <a href="/add-meal" class="hover:text-teal-200">Add a Meal</a>
+        <a href="/my-log" class="hover:text-teal-200">My Log</a>
+        <a href="/relief-hub" class="hover:text-teal-200">Relief Hub</a>
+        <a href="/blogs" class="hover:text-teal-200">Blogs</a>
+        <a href="/settings" class="hover:text-teal-200">Settings</a>
+        <button id="filter-btn" class="bg-teal-700 px-4 py-2 rounded hover:bg-teal-800">
+          Filters
+        </button>
+      </div>
+      <!-- Mobile Nav Toggle -->
+      <button id="nav-toggle" class="md:hidden focus:outline-none">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+        </svg>
+      </button>
+    </div>
+    <!-- Mobile Menu (Hidden by Default) -->
+    <div id="mobile-menu" class="hidden md:hidden bg-teal-700 p-4">
+      <a href="/home" class="block py-2 hover:text-teal-200">Home</a>
+      <a href="/favorites" class="block py-2 hover:text-teal-200">Favorites</a>
+      <a href="/add-meal" class="block py-2 hover:text-teal-200">Add a Meal</a>
+      <a href="/my-log" class="block py-2 hover:text-teal-200">My Log</a>
+      <a href="/relief-hub" class="block py-2 hover:text-teal-200">Relief Hub</a>
+      <a href="/blogs" class="block py-2 hover:text-teal-200">Blogs</a>
+      <a href="/settings" class="block py-2 hover:text-teal-200">Settings</a>
+      <button id="mobile-filter-btn" class="bg-teal-800 px-4 py-2 mt-2 rounded w-full text-left hover:bg-teal-900">
+        Filters
+      </button>
+    </div>
+  </nav>
+
+  <!-- Filter Modal (Hidden by Default) -->
+  <div id="filter-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-teal-800">Filter Meals</h2>
+        <button id="close-filter-btn" class="text-gray-600 hover:text-gray-800">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <form id="filter-form" class="space-y-4">
+        <!-- Pain Level -->
+        <div>
+          <label for="pain-level" class="block text-sm font-medium text-gray-700">Pain Level</label>
+          <select id="pain-level" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500">
+            <option value="none">None</option>
+            <option value="mild">Mild</option>
+            <option value="active">Active</option>
+          </select>
+        </div>
+        <!-- Budget -->
+        <div>
+          <label for="budget" class="block text-sm font-medium text-gray-700">Budget (₦500–₦5000)</label>
+          <input type="range" id="budget" min="500" max="5000" step="100" value="2000" class="w-full mt-1">
+          <span id="budget-value" class="text-gray-600">₦2000</span>
+        </div>
+        <!-- Energy Level -->
+        <div>
+          <label for="energy-level" class="block text-sm font-medium text-gray-700">Energy Level</label>
+          <select id="energy-level" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500">
+            <option value="very-low">Very Low</option>
+            <option value="low">Low</option>
+            <option value="normal">Normal</option>
+          </select>
+        </div>
+        <!-- Ingredient Filter -->
+        <div>
+          <label for="ingredients" class="block text-sm font-medium text-gray-700">Ingredients (comma-separated, e.g., yam, milk)</label>
+          <input type="text" id="ingredients" class="mt-1 block w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500" placeholder="Enter ingredients">
+          <label class="flex items-center mt-2">
+            <input type="checkbox" id="exclude-ingredients" class="mr-2">
+            <span class="text-sm text-gray-700">Exclude these ingredients</span>
+          </label>
+        </div>
+        <!-- Save Button -->
+        <button type="submit" class="w-full bg-teal-600 text-white p-2 rounded hover:bg-teal-700">Save Filters</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main id="main-content" class="container mx-auto p-4">
+    <!-- Dynamic content will be injected here -->
+    <div id="content" class="mt-4"></div>
+  </main>
+
+  <!-- Link to app.js -->
+  <script defer src="/src/scripts/app.js"></script>
+  <script>
+    // Redirect to the requested path
+    if (window.location.pathname !== '/') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  </script>
+</body>
+</html>
