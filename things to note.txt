@@ -4,3 +4,15 @@ https://jltpyjmgurmjvmnquzsz.supabase.co
 
 API Key (anon public)
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsdHB5am1ndXJtanZtbnF1enN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwNzg2MzcsImV4cCI6MjA2NTY1NDYzN30.N5uvcHEcID7cURKwVNg9D916hAE6V7I6MM2coIQ2Ee8
+
+
+
+
+
+
+
+
+
+
+<button class="blacklist-btn" data-meal-name="${meal.name} mt-2 w-full bg-gray-200 text-gray-700 p-2 rounded hover:bg-gray-300 text-sm">Not now</button>
+<button class="blacklist-btn" data-meal-name="${meal.name}" class="mt-2 w-full bg-gray-200 text-gray-700 p-2 rounded hover:bg-gray-300 text-sm">Not now</button>

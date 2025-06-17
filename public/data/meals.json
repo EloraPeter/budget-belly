@@ -1,4 +1,13 @@
 [
+    {
+    "name": "Milk Porridge",
+    "painLevel": "active",
+    "budget": 1000,
+    "timeToCook": 15,
+    "ingredients": ["milk", "oats"],
+    "tags": ["pain-safe", "quick"],
+    "steps": "Boil milk, add oats, stir."
+  },
   {
     "name": "Pap and Milk",
     "painLevel": "none",
