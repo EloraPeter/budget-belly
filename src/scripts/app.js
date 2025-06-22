@@ -1678,32 +1678,46 @@ document.addEventListener('DOMContentLoaded', () => {
       let blogPage = 1;
       async function renderBlogs() {
         const blogs = await loadBlogs(blogPage);
+        const blogList = document.getElementById('blog-list'); // Ensure blogList is defined
+        const loadMoreButton = document.getElementById('load-more-blogs'); // Define variable
+        if (!blogList) {
+          console.error('blog-list element not found');
+          return;
+        }
         if (blogs.length > 0) {
           blogList.innerHTML = blogs.map(blog => `
-        <div class="bg-white p-4 rounded-t-lg shadow-md cursor-pointer" data-blog-id="${blog.id}">
-          <h3 class="text-lg font-semibold text-teal-700">${blog.title}</h3>
-          <p class="text-sm text-gray-600">by ${blog.username}</p>
-          <p class="text-xs text-gray-500">${timeAgo(blog.created_at)}</p>
-          <p class="text-gray-600 mt-2 line-clamp-3">${blog.content}</p>
-          <div class="flex flex-wrap gap-2 mt-2">
-            ${blog.tags.map(tag => `<span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">${tag}</span>`).join('')}
-          </div>
-          <div class="mt-4 flex gap-2">
-            <button class="blog-like-btn" data-blog-id="${blog.id}">
-              <span class="text-2xl">${blog.isLiked ? '💖' : '🤍'}</span> ${blog.likeCount}
-            </button>
-            <button class="blog-comment-btn" data-blog-id="${blog.id}">
-              <span class="text-2xl">💬</span> ${blog.commentCount}
-            </button>
-          </div>
-        </div>
-      `).join('');
-          if (loadMoreButton) loadMoreButton.classList.remove('hidden');
+            <div class="bg-white p-4 rounded-t-lg shadow-md cursor-pointer" data-blog-id="${blog.id}">
+                <h3 class="text-lg font-semibold text-teal-700">${blog.title}</h3>
+                <p class="text-sm text-gray-600">by ${blog.username}</p>
+                <p class="text-xs text-gray-500">${timeAgo(blog.created_at)}</p>
+                <p class="text-gray-600 mt-2 line-clamp-3">${blog.content}</p>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    ${blog.tags && Array.isArray(blog.tags) ? blog.tags.map(tag => `<span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">${tag}</span>`).join('') : ''}
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <button class="blog-like-btn" data-blog-id="${blog.id}">
+                        <span class="text-2xl">${blog.isLiked ? '💖' : '🤍'}</span> ${blog.likeCount}
+                    </button>
+                    <button class="blog-comment-btn" data-blog-id="${blog.id}">
+                        <span class="text-2xl">💬</span> ${blog.commentCount}
+                    </button>
+                </div>
+            </div>
+        `).join('');
+          if (loadMoreButton) {
+            loadMoreButton.classList.remove('hidden');
+          } else {
+            console.warn('load-more-blogs button not found');
+          }
         } else {
           blogList.innerHTML = `<p class="text-center text-gray-600">No blogs available.</p>`;
-          document.getElementById('load-more-blogs').classList.add('hidden');
+          if (loadMoreButton) {
+            loadMoreButton.classList.add('hidden');
+          } else {
+            console.warn('load-more-blogs button not found');
+          }
         }
-        attachEventListeners(); // Re-attach listeners
+        attachEventListeners();
       }
       renderBlogs();
       document.getElementById('load-more-blogs').addEventListener('click', () => {
