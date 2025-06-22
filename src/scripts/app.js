@@ -126,6 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function addBlogComment(e, blogId, input) {
+    console.log('Submitting comment for blog:', blogId);
     try {
       const content = input.value.trim();
       if (!content) {
@@ -1592,17 +1593,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      if (commentForm) {
-        commentForm.addEventListener('submit', e => {
-          e.preventDefault();
-          const input = commentForm.querySelector('input');
-          const content = input.value.trim();
-          if (content) {
-            addComment(recipeId, content);
+     if (commentForm) {
+    commentForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const input = commentForm.querySelector('input');
+        const content = input.value.trim();
+        if (content) {
+            addBlogComment(e, blogId, input); // Pass event, blogId, and input
             input.value = '';
-          }
-        });
-      }
+        }
+    });
+}
 
       if (commentsDiv && commentBtn) {
         subscribeToComments(recipeId, (newComment) => {
