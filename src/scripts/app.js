@@ -1373,6 +1373,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     routeHandler = routes[path] || routes[defaultRoute];
     const contentDiv = document.getElementById('content');
+    console.log('Rendering route:', path); // Debug
     if (params) {
       routeHandler(params).then(html => {
         contentDiv.innerHTML = html;
