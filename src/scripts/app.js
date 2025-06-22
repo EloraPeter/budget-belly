@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .range(start, end);
 
       if (blogFilter.tag !== 'all') {
-        query = query.filter('tags', 'cs', `{${blogFilter.tag}}`);
+        query = query.contains('tags', [blogFilter.tag]);
       }
 
       const { data: blogs, error } = await query;
@@ -1593,17 +1593,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-     if (commentForm) {
-    commentForm.addEventListener('submit', e => {
-        e.preventDefault();
-        const input = commentForm.querySelector('input');
-        const content = input.value.trim();
-        if (content) {
+      if (commentForm) {
+        commentForm.addEventListener('submit', e => {
+          e.preventDefault();
+          const input = commentForm.querySelector('input');
+          const content = input.value.trim();
+          if (content) {
             addBlogComment(e, blogId, input); // Pass event, blogId, and input
             input.value = '';
-        }
-    });
-}
+          }
+        });
+      }
 
       if (commentsDiv && commentBtn) {
         subscribeToComments(recipeId, (newComment) => {
