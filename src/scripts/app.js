@@ -1365,6 +1365,7 @@ document.addEventListener('DOMContentLoaded', () => {
       path = '/recipe/:id';
       params = recipeMatch[1];
     } else if (blogMatch) {
+      console.log('Matched blog route with id:', blogMatch[1]);
       path = '/blog/:id';
       params = blogMatch[1];
     }
@@ -1700,7 +1701,6 @@ document.addEventListener('DOMContentLoaded', () => {
           blogList.innerHTML = `<p class="text-center text-gray-600">No blogs available.</p>`;
           document.getElementById('load-more-blogs').classList.add('hidden');
         }
-        attachEventListeners(); // Ensure listeners are attached after rendering
       }
       renderBlogs();
       document.getElementById('load-more-blogs').addEventListener('click', () => {
