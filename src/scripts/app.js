@@ -1366,25 +1366,36 @@ document.addEventListener('DOMContentLoaded', () => {
     let routeHandler = null;
     let params = null;
 
+    console.log('Navigating to path:', path); // Debug log
+
     const recipeMatch = path.match(/^\/recipe\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
     const blogMatch = path.match(/^\/blog\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
     if (recipeMatch) {
       path = '/recipe/:id';
       params = recipeMatch[1];
+      console.log('Matched recipe route with ID:', params);
     } else if (blogMatch) {
-      console.log('Matched blog route with id:', blogMatch[1]);
       path = '/blog/:id';
       params = blogMatch[1];
+      console.log('Matched blog route with ID:', params);
+    } else {
+      console.log('No specific route matched, using path:', path);
     }
 
     routeHandler = routes[path] || routes[defaultRoute];
     const contentDiv = document.getElementById('content');
     if (params) {
+      console.log('Calling route handler with params:', params);
       routeHandler(params).then(html => {
+        console.log('Rendering HTML for route:', path);
         contentDiv.innerHTML = html;
         attachEventListeners();
+      }).catch(err => {
+        console.error('Error rendering route:', path, err);
+        contentDiv.innerHTML = `<p>Error loading page. Please try again.</p>`;
       });
     } else {
+      console.log('Rendering static route:', path);
       contentDiv.innerHTML = routeHandler();
       attachEventListeners();
     }
