@@ -1828,7 +1828,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const input = commentForm.querySelector('input');
           const content = input.value.trim();
           if (content) {
-            addBlogComment(blogId, content);
+            addBlogComment(e, blogId, content);
             input.value = '';
           }
         });
