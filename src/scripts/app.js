@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function addBlogComment(e, blogId, input) {
+  async function addBlogComment(blogId, input) {
     console.log('Submitting comment for blog:', blogId);
     try {
       const content = input.value.trim();
