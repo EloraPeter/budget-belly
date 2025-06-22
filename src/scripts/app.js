@@ -105,8 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .range(start, end);
 
       if (blogFilter.tag !== 'all') {
-        query = query.contains('tags', [blogFilter.tag]);
-      }
+query = query.contains('tags', [blogFilter.tag]);      }
 
       const { data: blogs, error } = await query;
       if (error) throw error;
@@ -1593,17 +1592,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      if (commentForm) {
-        commentForm.addEventListener('submit', e => {
-          e.preventDefault();
-          const input = commentForm.querySelector('input');
-          const content = input.value.trim();
-          if (content) {
+     if (commentForm) {
+    commentForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const input = commentForm.querySelector('input');
+        const content = input.value.trim();
+        if (content) {
             addBlogComment(e, blogId, input); // Pass event, blogId, and input
             input.value = '';
-          }
-        });
-      }
+        }
+    });
+}
 
       if (commentsDiv && commentBtn) {
         subscribeToComments(recipeId, (newComment) => {
@@ -1702,7 +1701,6 @@ document.addEventListener('DOMContentLoaded', () => {
           blogList.innerHTML = `<p class="text-center text-gray-600">No blogs available.</p>`;
           document.getElementById('load-more-blogs').classList.add('hidden');
         }
-        
       }
       renderBlogs();
       document.getElementById('load-more-blogs').addEventListener('click', () => {
