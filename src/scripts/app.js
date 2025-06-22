@@ -162,16 +162,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (error && error.code !== 'PGRST116') throw error; // Ignore "no row" error
 
       if (existingBlogLike) {
-  const { error: deleteError } = await supabase
-    .from('blog_likes')
-    .delete()
-    .eq('id', existingBlogLike.id);
+        const { error: deleteError } = await supabase
+          .from('blog_likes')
+          .delete()
+          .eq('id', existingBlogLike.id);
         if (deleteError) throw deleteError;
         return false; // Unliked
       } else {
         const { error: insertError } = await supabase
           .from('blog_likes')
-          .from('blog')
           .insert({ blog_id: blogId, user_id: currentUserId });
         if (insertError) throw insertError;
         return true; // Liked
