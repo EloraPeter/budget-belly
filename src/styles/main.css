@@ -1,0 +1,37 @@
+#toast.success {
+  background-color: #059669; /* Tailwind teal-600 */
+}
+#toast.error {
+  background-color: #dc2626; /* Tailwind red-600 */
+}
+#toast.prompt {
+  background-color: #0284c7; /* Tailwind blue-600 */
+}
+
+.skeleton-card {
+  background-color: #f3f4f6; /* Tailwind gray-100 */
+  border-radius: 0.5rem;
+  padding: 1rem;
+  animation: pulse 1.5s infinite;
+}
+.skeleton-card::before {
+  content: '';
+  display: block;
+  height: 1.5rem;
+  width: 60%;
+  background-color: #e5e7eb; /* Tailwind gray-200 */
+  margin-bottom: 0.5rem;
+  border-radius: 0.25rem;
+}
+.skeleton-card::after {
+  content: '';
+  display: block;
+  height: 4rem;
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
+}
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}

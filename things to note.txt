@@ -16,3 +16,275 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsdHB5am1
 
 <button class="blacklist-btn" data-meal-name="${meal.name} mt-2 w-full bg-gray-200 text-gray-700 p-2 rounded hover:bg-gray-300 text-sm">Not now</button>
 <button class="blacklist-btn" data-meal-name="${meal.name}" class="mt-2 w-full bg-gray-200 text-gray-700 p-2 rounded hover:bg-gray-300 text-sm">Not now</button>
+
+
+
+
+CURRENT ERROR SECTION
+
+Verify Blog Detail View:
+Go to /blogs, click a blog card, and confirm navigation to /blog/:id.
+Check console for errors (e.g., Supabase query failures).
+Ensure title, content, tags, username, likes, and comments display.
+
+this is not working and there are no errors
+
+theres no where to comment in the blogcard, the like isnt working for the blog and no error is being given the filter isnt working againg at all
+
+supabase-js@2:7 
+ GET https://jltpyjmgurmjvmnquzsz.supabase.co/rest/v1/blogs?select=*%2Cblog_like…ted_at%29&order=created_at.desc&offset=0&limit=10&tags=ilike.%25Trigger%25 404 (Not Found)
+app.js:122 Error loading blogs: 
+{code: '42883', details: null, hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.', message: 'operator does not exist: text[] ~~* unknown'}
+supabase-js@2:7 
+ GET https://jltpyjmgurmjvmnquzsz.supabase.co/rest/v1/blogs?select=*%2Cblog_like…ted_at%29&order=created_at.desc&offset=0&limit=10&tags=ilike.%25Comfort%25 404 (Not Found)
+app.js:122 Error loading blogs: 
+{code: '42883', details: null, hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.', message: 'operator does not exist: text[] ~~* unknown'}
+supabase-js@2:7 
+ GET https://jltpyjmgurmjvmnquzsz.supabase.co/rest/v1/blogs?select=*%2Cblog_like…ted_at%29&order=created_at.desc&offset=0&limit=10&tags=ilike.%25Trigger%25 404 (Not Found)
+app.js:122 Error loading blogs: 
+{code: '42883', details: null, hint: 'No operator matches the given name and argument types. You might need to add explicit type casts.', message: 'operator does not exist: text[] ~~* unknown'}
+
+blog filter is too strict
+like and comment is still not working
+﻿
+
+
+
+
+
+WHAT WE ARE BUILDING
+
+Here’s your updated **Budget Belly Build Plan – Phase-by-Phase, Task-by-Task**, with **exact functionalities** for each part so you always know what to do next.
+
+---
+
+# 🥣 BUDGET BELLY — MICRO TASK BUILD GUIDE
+
+> **MVP + FULL SYSTEM**, sorted clearly by phases, sub-tasks, and features
+> For each section, just **check off what you’ve done** before moving to the next!
+
+---
+
+## 🧱 PHASE 1 — FOUNDATION (UI, Layout, State Setup)
+
+### **1A. Project Setup**
+
+* [ ] Create folder structure (`/public`, `/src`, `/images`, `/scripts`)
+* [ ] Set up `index.html` with:
+
+  * `<nav>`: Logo, filter button, nav toggle
+  * `<main>` placeholder
+  * Add Tailwind CDN
+* [ ] Add `app.js` + link to script
+* [ ] Setup routing system (JS-based view switch or multipage)
+
+---
+
+### **1B. Base UI Structure**
+
+* [ ] Page: **Home (Meal Suggestions)**
+* [ ] Page: **Add a Meal**
+* [ ] Page: **My Log**
+* [ ] Page: **Relief Hub**
+* [ ] Page: **Blogs**
+* [ ] Page: **Settings**
+
+Each page just needs:
+
+* [ ] Page title/header bar
+* [ ] Main content box
+* [ ] Back/home button
+
+---
+
+### **1C. User Filters State**
+
+* [ ] Pain level (None / Mild / Active) → Save to localStorage
+* [ ] Budget input or slider (₦500–₦5000)
+* [ ] Energy level (Very Low / Low / Normal)
+* [ ] Add a **Filter modal or sheet** that shows on button click
+* [ ] Create a global `userState` object in JS to save this
+* [ ] Store filters in `localStorage` so they persist
+
+---
+
+## 🍱 PHASE 2 — SMART MEAL ENGINE
+
+### **2A. Meal Dataset**
+
+* [ ] Create a JSON file with 30+ meals
+
+  * name, painLevel, budget, timeToCook, ingredients, tags
+* [ ] Load this data into the app using fetch or inline
+* [ ] Add meal cards: show
+
+  * Title, image, tags (pain-safe, cost, cook time)
+
+---
+
+### **2B. Filtering Logic**
+
+* [ ] Write JS function to:
+
+  * Match meals with user pain + budget + energy
+  * Display results in a scrollable list/grid
+* [ ] Add refresh/shuffle button
+* [ ] If no results: show comforting fallback message
+* [ ] Add heart 💖 (save to favorites)
+
+---
+
+### **2C. Save & History**
+
+* [ ] Save liked meals to localStorage
+* [ ] Create **“Favorites”** view to display saved meals
+* [ ] Add “Not now” button to skip a meal (blacklist temporarily)
+
+---
+
+## 👩🏽‍🍳 PHASE 3 — COMMUNITY RECIPES
+
+### **3A. Recipe Upload System**
+
+* [ ] Form: Meal Name, Ingredients, Steps
+* [ ] Dropdowns: Pain-safe?, Budget range, Time to cook
+* [ ] Image Upload (Firebase/Cloudinary)
+* [ ] Video upload (optional)
+* [ ] Store in Supabase or Firebase DB
+
+---
+
+### **3B. Feed Display**
+
+* [ ] Create a “For You” community feed
+
+  * Shows recently added meals + fits user pain level
+* [ ] Add real-time cards: Title, Image, User, Tags
+* [ ] Add likes 💖, save 💾, and comments 💬 button
+
+---
+
+### **3C. Comments & Likes**
+
+* [ ] When a recipe is clicked → open full detail view
+* [ ] Comment system using Supabase Realtime or Firebase
+* [ ] Like count updates without reload
+* [ ] Show latest 5–10 comments under each recipe
+
+---
+
+## ✍️ PHASE 4 — BLOG & FOOD JOURNAL
+
+### **4A. Add Blog System**
+
+* [ ] Blog form:
+
+  * Title, content, optional tags (“Trigger”, “Comfort”, “Budget Hack”)
+* [ ] Save to DB
+* [ ] Blog display: newest at top, filter by tag
+* [ ] Comment under blogs (optional)
+
+---
+
+### **4B. My Stomach Log**
+
+* [ ] Daily tracker:
+
+  * What I ate, pain level after, any notes
+* [ ] Save each day as a JSON object to localStorage
+* [ ] Show history (timeline or list)
+* [ ] Simple chart view (optional)
+
+---
+
+### **4C. Ulcer Trigger DB**
+
+* [ ] Form: Food name, pain reaction (mild/moderate/severe), symptoms
+* [ ] Add to shared database
+* [ ] View searchable list by food name or pain score
+* [ ] Report button for false entries
+
+---
+
+## 🎤 PHASE 5 — VOICE & AI POWER
+
+### **5A. Voice Meal Logger**
+
+* [ ] Use Web Speech API for speech-to-text
+* [ ] Log meal: “Bread and pap at 10am”
+* [ ] Add to My Log
+* [ ] Manual edit of voice logs allowed
+
+---
+
+### **5B. AI Meal Suggestions**
+
+* [ ] Based on saved meals, logs, and dislikes → suggest 1 new meal
+* [ ] You can use OpenAI API for “Suggest 3 ulcer-safe meals under ₦1000”
+* [ ] Display result with “Why this?” breakdown
+
+---
+
+### **5C. ₦3000/₦5000 Meal Planner**
+
+* [ ] User inputs:
+
+  * Budget (₦3000, ₦5000)
+  * Cooking frequency (daily/2x per day/etc)
+* [ ] Generate a JSON 7-day plan (from dataset or AI)
+* [ ] Output in table:
+
+  * Day 1 → Morning: Pap | Afternoon: Rice + boiled egg | Night: Yogurt
+
+---
+
+## 🍳 PHASE 6 — COOK-ALONG + GROUPS
+
+### **6A. Cook-Along Mode**
+
+* [ ] User chooses recipe → enter “cook-along mode”
+* [ ] Step-by-step instruction view
+* [ ] "Next step" button or voice navigation (“Next”, “Repeat”, etc)
+* [ ] Optional: animated illustrations
+
+---
+
+### **6B. Support Groups**
+
+* [ ] Create real-time group chat using Supabase Channels or Firebase Chat
+* [ ] Group types:
+
+  * “No gas gang”, “Severe ulcer babes”, “Budget ninjas”
+* [ ] Users can post messages, emojis, replies
+* [ ] Admin or auto moderation (filter bad words)
+
+---
+
+## 🌐 PHASE 7 — PWA + DEPLOYMENT
+
+### **7A. PWA Features**
+
+* [ ] Add `manifest.json` with icons, app name, theme color
+* [ ] Add service worker to cache:
+
+  * Homepage
+  * Meal data
+  * Saved recipes/logs
+* [ ] Test install prompt on mobile
+
+---
+
+### **7B. Offline Mode**
+
+* [ ] Save 5–10 meals locally for offline access
+* [ ] Sync logs + new recipes when user goes online again
+
+---
+
+### **7C. Final Touches**
+
+* [ ] SEO meta tags
+* [ ] OG card image
+* [ ] App favicon and icons
+* [ ] Launch on GitHub Pages or Vercel
+* [ ] Share with feedback form
