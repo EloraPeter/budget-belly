@@ -161,11 +161,11 @@ document.addEventListener('DOMContentLoaded', () => {
         .single();
       if (error && error.code !== 'PGRST116') throw error; // Ignore "no row" error
 
-      if (existingLike) {
-        const { error: deleteError } = await supabase
-          .from('blog_likes')
-          .delete()
-          .eq('id', existingLike.id);
+      if (existingBlogLike) {
+  const { error: deleteError } = await supabase
+    .from('blog_likes')
+    .delete()
+    .eq('id', existingBlogLike.id);
         if (deleteError) throw deleteError;
         return false; // Unliked
       } else {
@@ -1739,6 +1739,14 @@ document.addEventListener('DOMContentLoaded', () => {
         blogPage++;
         renderBlogs();
       });
+      blogList.querySelectorAll('[data-blog-id]').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = card.getAttribute('data-blog-id');
+          history.pushState({}, '', `/blog/${id}`);
+          navigate(); // trigger re-render
+        });
+      });
+
     }
 
     document.querySelectorAll('.blog-comment-form').forEach(form => {
