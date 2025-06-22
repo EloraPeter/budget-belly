@@ -1697,7 +1697,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
       `).join('');
-          document.getElementById('load-more-blogs').classList.remove('hidden');
+          if (loadMoreButton) loadMoreButton.classList.remove('hidden');
         } else {
           blogList.innerHTML = `<p class="text-center text-gray-600">No blogs available.</p>`;
           document.getElementById('load-more-blogs').classList.add('hidden');
