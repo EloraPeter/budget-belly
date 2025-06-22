@@ -1696,24 +1696,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const blogs = await loadBlogs(blogPage);
         if (blogs.length > 0) {
           blogList.innerHTML = blogs.map(blog => `
-        <div class="bg-white p-4 rounded-t-lg shadow-md cursor-pointer" data-blog-id="${blog.id}">
-          <h3 class="text-lg font-semibold text-teal-700">${blog.title}</h3>
-          <p class="text-sm text-gray-600">by ${blog.username}</p>
-          <p class="text-xs text-gray-500">${timeAgo(blog.created_at)}</p>
-          <p class="text-gray-600 mt-2 line-clamp-3">${blog.content}</p>
-          <div class="flex flex-wrap gap-2 mt-2">
-            ${blog.tags.map(tag => `<span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">${tag}</span>`).join('')}
-          </div>
-          <div class="mt-4 flex gap-2">
-            <button class="blog-like-btn" data-blog-id="${blog.id}">
-              <span class="text-2xl">${blog.isLiked ? '💖' : '🤍'}</span> ${blog.likeCount}
-            </button>
-            <button class="blog-comment-btn" data-blog-id="${blog.id}">
-              <span class="text-2xl">💬</span> ${blog.commentCount}
-            </button>
+      <div class="bg-white p-4 rounded-t-lg shadow-md cursor-pointer" data-blog-id="${blog.id}">
+        <h3 class="text-lg font-semibold text-teal-700">${blog.title}</h3>
+        <p class="text-sm text-gray-600">by ${blog.username}</p>
+        <p class="text-xs text-gray-500">${timeAgo(blog.created_at)}</p>
+        <p class="text-gray-600 mt-2 line-clamp-3">${blog.content}</p>
+        <div class="flex flex-wrap gap-2 mt-2">
+          ${blog.tags.map(tag => `<span class="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded">${tag}</span>`).join('')}
+        </div>
+        <div class="mt-4 flex gap-2">
+          <button class="blog-like-btn" data-blog-id="${blog.id}">
+            <span class="text-2xl">${blog.isLiked ? '💖' : '🤍'}</span> ${blog.likeCount}
+          </button>
+          <button class="blog-comment-btn" data-blog-id="${blog.id}">
+            <span class="text-2xl">💬</span> ${blog.commentCount}
+          </button>
+        </div>
+        <div class="mt-2">
+          <form class="blog-comment-form" data-blog-id="${blog.id}">
+            <input type="text" placeholder="Add a comment..." class="w-full p-2 border border-gray-300 rounded-t-lg focus:ring-teal-500 focus:border-teal-500" required>
+            <button type="submit" class="mt-2 bg-teal-600 text-white p-2 rounded-t-lg hover:bg-teal-700">Post</button>
+          </form>
+          <div class="comments mt-2 max-h-32 overflow-y-auto">
+            ${blog.comments.map(comment => `
+              <div class="text-sm text-gray-600 mb-1" data-comment-id="${comment.id}">
+                <strong>${comment.username}:</strong> ${comment.content}
+                <span class="text-xs text-gray-500">${timeAgo(comment.created_at)}</span>
+              </div>
+            `).join('')}
           </div>
         </div>
-      `).join('');
+      </div>
+    `).join('');
           document.getElementById('load-more-blogs').classList.remove('hidden');
         } else {
           blogList.innerHTML = `<p class="text-center text-gray-600">No blogs available.</p>`;
@@ -1747,8 +1761,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.blog-comment-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const form = document.querySelector(`.blog-comment-form[data-blog-id="${btn.dataset.blogId}"]`);
-        if (form) form.querySelector('input').focus();
+        const blogId = btn.dataset.blogId;
+        history.pushState({}, '', `/blog/${blogId}`);
+        navigate();
+        // Defer focusing until the new page is rendered
+        setTimeout(() => {
+          const form = document.querySelector(`.blog-comment-form[data-blog-id="${blogId}"]`);
+          if (form) {
+            const input = form.querySelector('input');
+            if (input) input.focus();
+          }
+        }, 0);
       });
     });
 
