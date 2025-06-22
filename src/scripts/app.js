@@ -1,460 +1,460 @@
 document.addEventListener('DOMContentLoaded', () => {
-    if (!window.supabase) {
-        console.error('Supabase SDK not loaded. Check CDN.');
-        showToast('Failed to load Supabase. Please refresh the page.', 'error');
-        return;
+  if (!window.supabase) {
+    console.error('Supabase SDK not loaded. Check CDN.');
+    showToast('Failed to load Supabase. Please refresh the page.', 'error');
+    return;
+  }
+
+  let supabase;
+  try {
+    supabase = window.supabase.createClient(
+      'https://jltpyjmgurmjvmnquzsz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsdHB5am1ndXJtanZtbnF1enN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwNzg2MzcsImV4cCI6MjA2NTY1NDYzN30.N5uvcHEcID7cURKwVNg9D916hAE6V7I6MM2coIQ2Ee8'
+    );
+    console.log('Supabase initialized:', supabase);
+  } catch (error) {
+    console.error('Supabase initialization failed:', error);
+    showToast('Failed to initialize Supabase. Please try again later.', 'error');
+    return;
+  }
+
+  const navToggle = document.getElementById('nav-toggle');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const filterBtn = document.getElementById('filter-btn');
+  const mobileFilterBtn = document.getElementById('mobile-filter-btn');
+  const filterModal = document.getElementById('filter-modal');
+  const closeFilterBtn = document.getElementById('close-filter-btn');
+  const filterForm = document.getElementById('filter-form');
+  const budgetSlider = document.getElementById('budget');
+  const budgetValue = document.getElementById('budget-value');
+
+  let userState = {
+    painLevel: 'none',
+    budget: 2000,
+    energyLevel: 'normal',
+    ingredients: [],
+    excludeIngredients: false
+  };
+  let meals = [];
+  let favorites = [];
+  let blacklisted = [];
+  let favoriteSort = 'name';
+  let favoriteFilter = { painLevel: 'all', tag: 'all' };
+  let currentUserId = null;
+  let commentSubscriptions = {};
+  let pollingIntervals = {};
+
+  let blogFilter = { tag: 'all' };
+
+  async function handleBlogSubmit(e) {
+    e.preventDefault();
+    const username = document.getElementById('blog-username').value.trim() || 'Anonymous';
+    const title = document.getElementById('blog-title').value.trim();
+    const content = document.getElementById('blog-content').value.trim();
+    const tagsInput = document.getElementById('blog-tags').value;
+    const tags = tagsInput
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0);
+
+    if (!title || !content) {
+      showToast('Please fill in all required fields.', 'error');
+      return;
     }
 
-    let supabase;
     try {
-        supabase = window.supabase.createClient(
-            'https://jltpyjmgurmjvmnquzsz.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsdHB5am1ndXJtanZtbnF1enN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwNzg2MzcsImV4cCI6MjA2NTY1NDYzN30.N5uvcHEcID7cURKwVNg9D916hAE6V7I6MM2coIQ2Ee8'
-        );
-        console.log('Supabase initialized:', supabase);
+      const { error } = await supabase.from('blogs').insert({
+        user_id: currentUserId,
+        username,
+        title,
+        content,
+        tags,
+        updated_at: new Date().toISOString()
+      });
+      if (error) throw error;
+      showToast('Blog submitted successfully!', 'success');
+      document.getElementById('blog-form').reset();
+      await loadBlogs();
+      navigate();
     } catch (error) {
-        console.error('Supabase initialization failed:', error);
-        showToast('Failed to initialize Supabase. Please try again later.', 'error');
-        return;
+      console.error('Error submitting blog:', error);
+      showToast('Failed to submit blog. Please try again.', 'error');
     }
+  }
 
-    const navToggle = document.getElementById('nav-toggle');
-    const mobileMenu = document.getElementById('mobile-menu');
-    const filterBtn = document.getElementById('filter-btn');
-    const mobileFilterBtn = document.getElementById('mobile-filter-btn');
-    const filterModal = document.getElementById('filter-modal');
-    const closeFilterBtn = document.getElementById('close-filter-btn');
-    const filterForm = document.getElementById('filter-form');
-    const budgetSlider = document.getElementById('budget');
-    const budgetValue = document.getElementById('budget-value');
-
-    let userState = {
-        painLevel: 'none',
-        budget: 2000,
-        energyLevel: 'normal',
-        ingredients: [],
-        excludeIngredients: false
-    };
-    let meals = [];
-    let favorites = [];
-    let blacklisted = [];
-    let favoriteSort = 'name';
-    let favoriteFilter = { painLevel: 'all', tag: 'all' };
-    let currentUserId = null;
-    let commentSubscriptions = {};
-    let pollingIntervals = {};
-
-    let blogFilter = { tag: 'all' };
-
-    async function handleBlogSubmit(e) {
-        e.preventDefault();
-        const username = document.getElementById('blog-username').value.trim() || 'Anonymous';
-        const title = document.getElementById('blog-title').value.trim();
-        const content = document.getElementById('blog-content').value.trim();
-        const tagsInput = document.getElementById('blog-tags').value;
-        const tags = tagsInput
-            .split(',')
-            .map(tag => tag.trim())
-            .filter(tag => tag.length > 0);
-
-        if (!title || !content) {
-            showToast('Please fill in all required fields.', 'error');
-            return;
-        }
-
-        try {
-            const { error } = await supabase.from('blogs').insert({
-                user_id: currentUserId,
-                username,
-                title,
-                content,
-                tags,
-                updated_at: new Date().toISOString()
-            });
-            if (error) throw error;
-            showToast('Blog submitted successfully!', 'success');
-            document.getElementById('blog-form').reset();
-            await loadBlogs();
-            navigate();
-        } catch (error) {
-            console.error('Error submitting blog:', error);
-            showToast('Failed to submit blog. Please try again.', 'error');
-        }
-    }
-
-    async function loadBlogs(page = 1, limit = 10) {
-        const blogList = document.getElementById('blog-list');
-        if (blogList) {
-            blogList.innerHTML = `
+  async function loadBlogs(page = 1, limit = 10) {
+    const blogList = document.getElementById('blog-list');
+    if (blogList) {
+      blogList.innerHTML = `
       <div class="skeleton-card"></div>
       <div class="skeleton-card"></div>
       <div class="skeleton-card"></div>
     `;
-        }
-        try {
-            const start = (page - 1) * limit;
-            const end = start + limit - 1;
-            let query = supabase
-                .from('blogs')
-                .select(`
+    }
+    try {
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
+      let query = supabase
+        .from('blogs')
+        .select(`
         *,
         blog_likes (id, user_id),
         blog_comments (id, username, content, created_at)
       `)
-                .order('created_at', { ascending: false })
-                .range(start, end);
+        .order('created_at', { ascending: false })
+        .range(start, end);
 
-            if (blogFilter.tag !== 'all') {
-                query = query.filter('tags', 'cs', `{${blogFilter.tag}}`);
-            }
+      if (blogFilter.tag !== 'all') {
+        query = query.filter('tags', 'cs', `{${blogFilter.tag}}`);
+      }
 
-            const { data: blogs, error } = await query;
-            if (error) throw error;
+      const { data: blogs, error } = await query;
+      if (error) throw error;
 
-            return blogs.map(blog => ({
-                ...blog,
-                isLiked: blog.blog_likes ? blog.blog_likes.some(like => like.user_id === currentUserId) : false,
-                likeCount: blog.blog_likes ? blog.blog_likes.length : 0,
-                commentCount: blog.blog_comments ? blog.blog_comments.length : 0,
-                comments: blog.blog_comments ? blog.blog_comments.slice(0, 5) : []
-            }));
-        } catch (error) {
-            console.error('Error loading blogs:', error);
-            showToast('Failed to load blogs. Please try again.', 'error');
-            return [];
-        }
+      return blogs.map(blog => ({
+        ...blog,
+        isLiked: blog.blog_likes ? blog.blog_likes.some(like => like.user_id === currentUserId) : false,
+        likeCount: blog.blog_likes ? blog.blog_likes.length : 0,
+        commentCount: blog.blog_comments ? blog.blog_comments.length : 0,
+        comments: blog.blog_comments ? blog.blog_comments.slice(0, 5) : []
+      }));
+    } catch (error) {
+      console.error('Error loading blogs:', error);
+      showToast('Failed to load blogs. Please try again.', 'error');
+      return [];
     }
+  }
 
-    async function addBlogComment(e, blogId, input) {
-        try {
-            const content = input.value.trim();
-            if (!content) {
-                showToast('Comment cannot be empty.', 'error');
-                return null;
-            }
+  async function addBlogComment(e, blogId, input) {
+    try {
+      const content = input.value.trim();
+      if (!content) {
+        showToast('Comment cannot be empty.', 'error');
+        return null;
+      }
 
-            const { error } = await supabase.from('blog_comments').insert({
-                blog_id: blogId,
-                user_id: currentUserId,
-                content
-            });
-            if (error) throw error;
+      const { error } = await supabase.from('blog_comments').insert({
+        blog_id: blogId,
+        user_id: currentUserId,
+        content
+      });
+      if (error) throw error;
 
-            showToast('Comment added successfully!', 'success');
-            input.value = '';
-            return true;
-        } catch (error) {
-            console.error('Error adding blog comment:', error);
-            showToast('Failed to add comment. Please try again.', 'error');
-            return false;
-        }
+      showToast('Comment added successfully!', 'success');
+      input.value = '';
+      return true;
+    } catch (error) {
+      console.error('Error adding blog comment:', error);
+      showToast('Failed to add comment. Please try again.', 'error');
+      return false;
     }
+  }
 
-    async function toggleBlogLike(blogId, likeBtn) {
-        try {
-            const { data: existingBlogLike, error } = await supabase
-                .from('blog_likes')
-                .select('id')
-                .eq('blog_id', blogId)
-                .eq('user_id', currentUserId)
-                .single();
-            if (error && error.code !== 'PGRST116') throw error; // Ignore "no row" error
+  async function toggleBlogLike(blogId, likeBtn) {
+    try {
+      const { data: existingBlogLike, error } = await supabase
+        .from('blog_likes')
+        .select('id')
+        .eq('blog_id', blogId)
+        .eq('user_id', currentUserId)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error; // Ignore "no row" error
 
-            if (existingLike) {
-                const { error: deleteError } = await supabase
-                    .from('blog_likes')
-                    .delete()
-                    .eq('id', existingLike.id);
-                if (deleteError) throw deleteError;
-                return false; // Unliked
-            } else {
-                const { error: insertError } = await supabase
-                    .from('blog_likes')
-                    .from('blog')
-                    .insert({ blog_id: blogId, user_id: currentUserId });
-                if (insertError) throw insertError;
-                return true; // Liked
-            }
-        } catch (error) {
-            console.error('Error toggling blog like:', error);
-            showToast('Failed to update like. Please try again.', 'error');
-            return null;
-        }
+      if (existingLike) {
+        const { error: deleteError } = await supabase
+          .from('blog_likes')
+          .delete()
+          .eq('id', existingLike.id);
+        if (deleteError) throw deleteError;
+        return false; // Unliked
+      } else {
+        const { error: insertError } = await supabase
+          .from('blog_likes')
+          .from('blog')
+          .insert({ blog_id: blogId, user_id: currentUserId });
+        if (insertError) throw insertError;
+        return true; // Liked
+      }
+    } catch (error) {
+      console.error('Error toggling blog like:', error);
+      showToast('Failed to update like. Please try again.', 'error');
+      return null;
     }
+  }
 
-    async function pollBlogComments(blogId, commentsDiv, commentBtn) {
-        try {
-            const { data: comments, error } = await supabase
-                .from('blog_comments')
-                .select('id, username, content, created_at')
-                .eq('blog_id', blogId)
-                .order('created_at', { ascending: false })
-                .limit(5);
-            if (error) throw error;
-            if (commentsDiv) {
-                const existingCommentIds = Array.from(commentsDiv.children).map(child =>
-                    child.dataset.commentId || child.querySelector('strong').textContent
-                );
-                const newComments = comments.filter(comment => !existingCommentIds.includes(comment.id.toString()));
-                newComments.forEach(comment => {
-                    const commentHtml = `
+  async function pollBlogComments(blogId, commentsDiv, commentBtn) {
+    try {
+      const { data: comments, error } = await supabase
+        .from('blog_comments')
+        .select('id, username, content, created_at')
+        .eq('blog_id', blogId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      if (commentsDiv) {
+        const existingCommentIds = Array.from(commentsDiv.children).map(child =>
+          child.dataset.commentId || child.querySelector('strong').textContent
+        );
+        const newComments = comments.filter(comment => !existingCommentIds.includes(comment.id.toString()));
+        newComments.forEach(comment => {
+          const commentHtml = `
           <div class="text-sm text-gray-600 mb-1" data-comment-id="${comment.id}">
             <strong>${comment.username}:</strong> ${comment.content}
             <span class="text-xs text-gray-500">${timeAgo(comment.created_at)}</span>
           </div>
         `;
-                    commentsDiv.insertAdjacentHTML('afterbegin', commentHtml);
-                });
-            }
-            if (commentBtn) {
-                const { count, error: countError } = await supabase
-                    .from('blog_comments')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('blog_id', blogId);
-                if (countError) throw countError;
-                commentBtn.innerHTML = `<span class="text-2xl">💬</span> ${count}`;
-            }
-        } catch (error) {
-            console.error('Error polling blog comments:', error);
-        }
+          commentsDiv.insertAdjacentHTML('afterbegin', commentHtml);
+        });
+      }
+      if (commentBtn) {
+        const { count, error: countError } = await supabase
+          .from('blog_comments')
+          .select('id', { count: 'exact', head: true })
+          .eq('blog_id', blogId);
+        if (countError) throw countError;
+        commentBtn.innerHTML = `<span class="text-2xl">💬</span> ${count}`;
+      }
+    } catch (error) {
+      console.error('Error polling blog comments:', error);
     }
+  }
 
 
-    async function pollBlogLikes(blogId, likeBtn) {
-        try {
-            const { data: likes, error } = await supabase
-                .from('blog_likes')
-                .select('id, user_id')
-                .eq('blog_id', blogId);
-            if (error) throw error;
-            const isLiked = likes.some(like => like.user_id === currentUserId);
-            const count = likes.length;
-            if (likeBtn) {
-                likeBtn.innerHTML = `<span class="text-2xl">${isLiked ? '💖' : '🤍'}</span> ${count}`;
-            }
-        } catch (error) {
-            console.error('Error polling blog likes:', error);
-        }
+  async function pollBlogLikes(blogId, likeBtn) {
+    try {
+      const { data: likes, error } = await supabase
+        .from('blog_likes')
+        .select('id, user_id')
+        .eq('blog_id', blogId);
+      if (error) throw error;
+      const isLiked = likes.some(like => like.user_id === currentUserId);
+      const count = likes.length;
+      if (likeBtn) {
+        likeBtn.innerHTML = `<span class="text-2xl">${isLiked ? '💖' : '🤍'}</span> ${count}`;
+      }
+    } catch (error) {
+      console.error('Error polling blog likes:', error);
     }
+  }
 
-    function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        if (!toast) return;
-        toast.textContent = message;
-        toast.className = `fixed bottom-4 right-4 p-4 rounded-lg shadow-lg text-white max-w-sm ${type}`;
-        toast.classList.remove('hidden');
-        setTimeout(() => {
-            toast.classList.add('hidden');
-        }, 3000);
-    }
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.className = `fixed bottom-4 right-4 p-4 rounded-lg shadow-lg text-white max-w-sm ${type}`;
+    toast.classList.remove('hidden');
+    setTimeout(() => {
+      toast.classList.add('hidden');
+    }, 3000);
+  }
 
-    async function loadBlogDetails(blogId) {
-        try {
-            const { data: blog, error } = await supabase
-                .from('blogs')
-                .select(`
+  async function loadBlogDetails(blogId) {
+    try {
+      const { data: blog, error } = await supabase
+        .from('blogs')
+        .select(`
         *,
         blog_likes (id, user_id),
         blog_comments (id, username, content, created_at)
       `)
-                .eq('id', blogId)
-                .single();
-            if (error) throw error;
+        .eq('id', blogId)
+        .single();
+      if (error) throw error;
 
-            return {
-                ...blog,
-                isLiked: blog.blog_likes ? blog.blog_likes.some(like => like.user_id === currentUserId) : false,
-                likeCount: blog.blog_likes ? blog.blog_likes.length : 0,
-                commentCount: blog.blog_comments ? blog.blog_comments.length : 0,
-                comments: blog.blog_comments ? blog.blog_comments.slice(0, 5) : []
-            };
-        } catch (error) {
-            console.error('Error loading blog details:', error);
-            showToast('Failed to load blog details. Please try again.', 'error');
-            return null;
+      return {
+        ...blog,
+        isLiked: blog.blog_likes ? blog.blog_likes.some(like => like.user_id === currentUserId) : false,
+        likeCount: blog.blog_likes ? blog.blog_likes.length : 0,
+        commentCount: blog.blog_comments ? blog.blog_comments.length : 0,
+        comments: blog.blog_comments ? blog.blog_comments.slice(0, 5) : []
+      };
+    } catch (error) {
+      console.error('Error loading blog details:', error);
+      showToast('Failed to load blog details. Please try again.', 'error');
+      return null;
+    }
+  }
+
+  function subscribeToBlogComments(blogId, callback) {
+    // Remove previous subscription if exists
+    if (commentSubscriptions[blogId]) {
+      supabase.removeChannel(commentSubscriptions[blogId]);
+    }
+
+    const subscription = supabase
+      .channel(`public:blog_comments:blog_id=eq.${blogId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'blog_comments',
+        filter: `blog_id=eq.${blogId}`
+      }, payload => {
+        callback(payload.new);
+      })
+      .subscribe(status => {
+        console.log('Blog comment subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log(`Subscribed to blog comments for blog ${blogId}`);
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          console.warn(`Blog comment subscription failed for status: ${status}, blogId: ${blogId}, relying on polling`);
         }
+      });
+
+    commentSubscriptions[blogId] = subscription;
+  }
+
+
+  function subscribeToBlogLikes(blogId, likeBlogBtn) {
+    // Remove previous subscription if needed
+    if (likeSubscriptions[blogId]) {
+      supabase.removeChannel(likeSubscriptions[blogId]);
     }
 
-    function subscribeToBlogComments(blogId, callback) {
-        // Remove previous subscription if exists
-        if (commentSubscriptions[blogId]) {
-            supabase.removeChannel(commentSubscriptions[blogId]);
+    const subscription = supabase
+      .channel(`public:blog_likes:blog_id=eq.${blogId}`)
+      .on('postgres_changes', {
+        event: 'INSERT', // you can also use 'UPDATE' or '*' for all events
+        schema: 'public',
+        table: 'blog_likes',
+        filter: `blog_id=eq.${blogId}`
+      }, async (payload) => {
+        console.log('New blog like event:', payload);
+        await pollBlogLikes(blogId, likeBlogBtn); // update UI
+      })
+      .subscribe(status => {
+        console.log('Blog like subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log(`Subscribed to blog likes for blog ${blogId}`);
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          console.warn(`Blog like subscription failed for blog ${blogId}, falling back to polling`);
         }
+      });
 
-        const subscription = supabase
-            .channel(`public:blog_comments:blog_id=eq.${blogId}`)
-            .on('postgres_changes', {
-                event: 'INSERT',
-                schema: 'public',
-                table: 'blog_comments',
-                filter: `blog_id=eq.${blogId}`
-            }, payload => {
-                callback(payload.new);
-            })
-            .subscribe(status => {
-                console.log('Blog comment subscription status:', status);
-                if (status === 'SUBSCRIBED') {
-                    console.log(`Subscribed to blog comments for blog ${blogId}`);
-                } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-                    console.warn(`Blog comment subscription failed for status: ${status}, blogId: ${blogId}, relying on polling`);
-                }
-            });
+    likeSubscriptions[blogId] = subscription;
+  }
 
-        commentSubscriptions[blogId] = subscription;
+
+  function startBlogPolling(blogId, likeBtn, commentsDiv, commentBtn) {
+    if (pollingIntervals[blogId]) return;
+    pollingIntervals[blogId] = setInterval(() => {
+      pollBlogLikes(blogId, likeBtn);
+      pollBlogComments(blogId, commentsDiv, commentBtn);
+    }, 10000);
+    console.log(`Started polling for blog ${blogId}`);
+  }
+
+  function stopBlogPolling(blogId) {
+    if (pollingIntervals[blogId]) {
+      clearInterval(pollingIntervals[blogId]);
+      delete pollingIntervals[blogId];
+      console.log(`Stopped polling for blog ${blogId}`);
     }
+  }
 
-
-    function subscribeToBlogLikes(blogId, likeBlogBtn) {
-        // Remove previous subscription if needed
-        if (likeSubscriptions[blogId]) {
-            supabase.removeChannel(likeSubscriptions[blogId]);
-        }
-
-        const subscription = supabase
-            .channel(`public:blog_likes:blog_id=eq.${blogId}`)
-            .on('postgres_changes', {
-                event: 'INSERT', // you can also use 'UPDATE' or '*' for all events
-                schema: 'public',
-                table: 'blog_likes',
-                filter: `blog_id=eq.${blogId}`
-            }, async (payload) => {
-                console.log('New blog like event:', payload);
-                await pollBlogLikes(blogId, likeBlogBtn); // update UI
-            })
-            .subscribe(status => {
-                console.log('Blog like subscription status:', status);
-                if (status === 'SUBSCRIBED') {
-                    console.log(`Subscribed to blog likes for blog ${blogId}`);
-                } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-                    console.warn(`Blog like subscription failed for blog ${blogId}, falling back to polling`);
-                }
-            });
-
-        likeSubscriptions[blogId] = subscription;
+  async function initAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
+      currentUserId = data.user.id;
+    } else {
+      currentUserId = session.user.id;
     }
+  }
 
-
-    function startBlogPolling(blogId, likeBtn, commentsDiv, commentBtn) {
-        if (pollingIntervals[blogId]) return;
-        pollingIntervals[blogId] = setInterval(() => {
-            pollBlogLikes(blogId, likeBtn);
-            pollBlogComments(blogId, commentsDiv, commentBtn);
-        }, 10000);
-        console.log(`Started polling for blog ${blogId}`);
+  function loadUserState() {
+    const savedState = localStorage.getItem('userState');
+    if (savedState) {
+      userState = JSON.parse(savedState);
+      document.getElementById('pain-level').value = userState.painLevel;
+      budgetSlider.value = userState.budget;
+      budgetValue.textContent = `₦${userState.budget}`;
+      document.getElementById('energy-level').value = userState.energyLevel;
+      document.getElementById('ingredients').value = userState.ingredients.join(', ');
+      document.getElementById('exclude-ingredients').checked = userState.excludeIngredients;
     }
+  }
 
-    function stopBlogPolling(blogId) {
-        if (pollingIntervals[blogId]) {
-            clearInterval(pollingIntervals[blogId]);
-            delete pollingIntervals[blogId];
-            console.log(`Stopped polling for blog ${blogId}`);
-        }
+  function saveUserState() {
+    localStorage.setItem('userState', JSON.stringify(userState));
+  }
+
+  function loadFavorites() {
+    const savedFavorites = localStorage.getItem('favorites');
+    if (savedFavorites) {
+      favorites = JSON.parse(savedFavorites);
     }
+  }
 
-    async function initAuth() {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            const { data, error } = await supabase.auth.signInAnonymously();
-            if (error) throw error;
-            currentUserId = data.user.id;
-        } else {
-            currentUserId = session.user.id;
-        }
+  function saveFavorites() {
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+  }
+
+  function loadBlacklisted() {
+    const savedBlacklisted = localStorage.getItem('blacklisted');
+    if (savedBlacklisted) {
+      blacklisted = JSON.parse(savedBlacklisted);
+      const now = Date.now();
+      blacklisted = blacklisted.filter(item => item.expires > now);
+      saveBlacklisted();
     }
+  }
 
-    function loadUserState() {
-        const savedState = localStorage.getItem('userState');
-        if (savedState) {
-            userState = JSON.parse(savedState);
-            document.getElementById('pain-level').value = userState.painLevel;
-            budgetSlider.value = userState.budget;
-            budgetValue.textContent = `₦${userState.budget}`;
-            document.getElementById('energy-level').value = userState.energyLevel;
-            document.getElementById('ingredients').value = userState.ingredients.join(', ');
-            document.getElementById('exclude-ingredients').checked = userState.excludeIngredients;
-        }
+  function saveBlacklisted() {
+    localStorage.setItem('blacklisted', JSON.stringify(blacklisted));
+  }
+
+  function toggleFavorite(mealName) {
+    if (favorites.includes(mealName)) {
+      favorites = favorites.filter(name => name !== mealName);
+    } else {
+      favorites.push(mealName);
     }
+    saveFavorites();
+    navigate();
+  }
 
-    function saveUserState() {
-        localStorage.setItem('userState', JSON.stringify(userState));
-    }
+  function blacklistMeal(mealName) {
+    const expires = Date.now() + 24 * 60 * 60 * 1000;
+    blacklisted.push({ name: mealName, expires });
+    saveBlacklisted();
+    navigate();
+  }
 
-    function loadFavorites() {
-        const savedFavorites = localStorage.getItem('favorites');
-        if (savedFavorites) {
-            favorites = JSON.parse(savedFavorites);
-        }
-    }
+  async function loadMeals() {
+    try {
+      const response = await fetch('./public/data/meals.json');
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+      const jsonMeals = await response.json();
+      console.log('JSON meals:', jsonMeals);
 
-    function saveFavorites() {
-        localStorage.setItem('favorites', JSON.stringify(favorites));
-    }
+      const { data: supabaseMeals, error } = await supabase.from('recipes').select('*');
+      if (error) throw error;
+      console.log('Supabase meals:', supabaseMeals);
 
-    function loadBlacklisted() {
-        const savedBlacklisted = localStorage.getItem('blacklisted');
-        if (savedBlacklisted) {
-            blacklisted = JSON.parse(savedBlacklisted);
-            const now = Date.now();
-            blacklisted = blacklisted.filter(item => item.expires > now);
-            saveBlacklisted();
-        }
-    }
+      const supabaseFormattedMeals = supabaseMeals.map(meal => ({
+        name: meal.name,
+        painLevel: meal.pain_level,
+        budget: meal.budget,
+        timeToCook: meal.time_to_cook,
+        ingredients: meal.ingredients,
+        tags: meal.tags,
+        steps: meal.steps,
+        imageUrl: meal.image_url,
+        videoUrl: meal.video_url,
+        username: meal.username,
+        source: 'supabase',
+        id: meal.id,
+        created_at: meal.created_at
+      }));
 
-    function saveBlacklisted() {
-        localStorage.setItem('blacklisted', JSON.stringify(blacklisted));
-    }
-
-    function toggleFavorite(mealName) {
-        if (favorites.includes(mealName)) {
-            favorites = favorites.filter(name => name !== mealName);
-        } else {
-            favorites.push(mealName);
-        }
-        saveFavorites();
-        navigate();
-    }
-
-    function blacklistMeal(mealName) {
-        const expires = Date.now() + 24 * 60 * 60 * 1000;
-        blacklisted.push({ name: mealName, expires });
-        saveBlacklisted();
-        navigate();
-    }
-
-    async function loadMeals() {
-        try {
-            const response = await fetch('./public/data/meals.json');
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            const jsonMeals = await response.json();
-            console.log('JSON meals:', jsonMeals);
-
-            const { data: supabaseMeals, error } = await supabase.from('recipes').select('*');
-            if (error) throw error;
-            console.log('Supabase meals:', supabaseMeals);
-
-            const supabaseFormattedMeals = supabaseMeals.map(meal => ({
-                name: meal.name,
-                painLevel: meal.pain_level,
-                budget: meal.budget,
-                timeToCook: meal.time_to_cook,
-                ingredients: meal.ingredients,
-                tags: meal.tags,
-                steps: meal.steps,
-                imageUrl: meal.image_url,
-                videoUrl: meal.video_url,
-                username: meal.username,
-                source: 'supabase',
-                id: meal.id,
-                created_at: meal.created_at
-            }));
-
-            meals = [...jsonMeals, ...supabaseFormattedMeals];
-            console.log('All meals:', meals);
-        } catch (error) {
-            console.error('Error loading meals:', error);
-            meals = [];
-            if (window.location.pathname === '/home') {
-                document.getElementById('content').innerHTML = `
+      meals = [...jsonMeals, ...supabaseFormattedMeals];
+      console.log('All meals:', meals);
+    } catch (error) {
+      console.error('Error loading meals:', error);
+      meals = [];
+      if (window.location.pathname === '/home') {
+        document.getElementById('content').innerHTML = `
           <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
             <h1 class="text-2xl font-bold">Meal Suggestions</h1>
             <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -463,446 +463,446 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="text-gray-600">Unable to load meals. Please try again later.</p>
           </div>
         `;
-            }
+      }
+    }
+  }
+
+  function filterMeals() {
+    console.log('Filtering meals with userState:', userState);
+    const filtered = meals.filter(meal => {
+      const painMatch = userState.painLevel === 'active' || meal.painLevel === userState.painLevel || meal.painLevel === 'none';
+      const budgetMatch = meal.budget <= userState.budget;
+      const energyMatch = userState.energyLevel === 'normal' ||
+        (userState.energyLevel === 'low' && meal.timeToCook <= 30) ||
+        (userState.energyLevel === 'very-low' && meal.timeToCook <= 15);
+      let ingredientMatch = true;
+      if (userState.ingredients.length > 0) {
+        if (userState.excludeIngredients) {
+          ingredientMatch = !userState.ingredients.some(ing =>
+            meal.ingredients.some(mealIng =>
+              mealIng.toLowerCase().includes(ing.toLowerCase())
+            )
+          );
+        } else {
+          ingredientMatch = userState.ingredients.every(ing =>
+            meal.ingredients.some(mealIng =>
+              mealIng.toLowerCase().includes(ing.toLowerCase())
+            )
+          );
         }
+      }
+      const notBlacklisted = !blacklisted.some(item => item.name === meal.name && item.expires > Date.now());
+      console.log('Meal:', meal.name, { painMatch, budgetMatch, energyMatch, ingredientMatch, notBlacklisted });
+      return painMatch && budgetMatch && energyMatch && ingredientMatch && notBlacklisted;
+    });
+    console.log('Filtered meals:', filtered);
+    return filtered;
+  }
+
+  function filterAndSortFavorites() {
+    let favoriteMeals = meals.filter(meal => favorites.includes(meal.name));
+
+    if (favoriteFilter.painLevel !== 'all') {
+      favoriteMeals = favoriteMeals.filter(meal => meal.painLevel === favoriteFilter.painLevel);
+    }
+    if (favoriteFilter.tag !== 'all') {
+      favoriteMeals = favoriteMeals.filter(meal => meal.tags.includes(favoriteFilter.tag));
     }
 
-    function filterMeals() {
-        console.log('Filtering meals with userState:', userState);
-        const filtered = meals.filter(meal => {
-            const painMatch = userState.painLevel === 'active' || meal.painLevel === userState.painLevel || meal.painLevel === 'none';
-            const budgetMatch = meal.budget <= userState.budget;
-            const energyMatch = userState.energyLevel === 'normal' ||
-                (userState.energyLevel === 'low' && meal.timeToCook <= 30) ||
-                (userState.energyLevel === 'very-low' && meal.timeToCook <= 15);
-            let ingredientMatch = true;
-            if (userState.ingredients.length > 0) {
-                if (userState.excludeIngredients) {
-                    ingredientMatch = !userState.ingredients.some(ing =>
-                        meal.ingredients.some(mealIng =>
-                            mealIng.toLowerCase().includes(ing.toLowerCase())
-                        )
-                    );
-                } else {
-                    ingredientMatch = userState.ingredients.every(ing =>
-                        meal.ingredients.some(mealIng =>
-                            mealIng.toLowerCase().includes(ing.toLowerCase())
-                        )
-                    );
-                }
-            }
-            const notBlacklisted = !blacklisted.some(item => item.name === meal.name && item.expires > Date.now());
-            console.log('Meal:', meal.name, { painMatch, budgetMatch, energyMatch, ingredientMatch, notBlacklisted });
-            return painMatch && budgetMatch && energyMatch && ingredientMatch && notBlacklisted;
-        });
-        console.log('Filtered meals:', filtered);
-        return filtered;
+    favoriteMeals.sort((a, b) => {
+      if (favoriteSort === 'name') {
+        return a.name.localeCompare(b.name);
+      } else if (favoriteSort === 'budget') {
+        return a.budget - b.budget;
+      } else if (favoriteSort === 'time') {
+        return a.timeToCook - b.timeToCook;
+      }
+      return 0;
+    });
+
+    return favoriteMeals;
+  }
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  async function handleRecipeSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById('recipe-name').value.trim();
+    const ingredients = document.getElementById('recipe-ingredients').value.split(',').map(i => i.trim());
+    const steps = document.getElementById('recipe-steps').value.trim();
+    const painLevel = document.getElementById('recipe-pain-level').value;
+    const budget = parseInt(document.getElementById('recipe-budget').value);
+    const time = parseInt(document.getElementById('recipe-time').value);
+    const imageFile = document.getElementById('recipe-image').files[0];
+    const videoFile = document.getElementById('recipe-video').files[0];
+    const username = document.getElementById('recipe-username').value.trim() || 'Anonymous';
+
+    if (!name || !ingredients.length || !steps || !painLevel || !budget || !time) {
+      showToast('Please fill in all required fields.', 'error');
+      return;
     }
 
-    function filterAndSortFavorites() {
-        let favoriteMeals = meals.filter(meal => favorites.includes(meal.name));
+    try {
+      let imageUrl = null;
+      let videoUrl = null;
 
-        if (favoriteFilter.painLevel !== 'all') {
-            favoriteMeals = favoriteMeals.filter(meal => meal.painLevel === favoriteFilter.painLevel);
-        }
-        if (favoriteFilter.tag !== 'all') {
-            favoriteMeals = favoriteMeals.filter(meal => meal.tags.includes(favoriteFilter.tag));
-        }
+      if (imageFile) {
+        const { data, error } = await supabase.storage
+          .from('recipe-images')
+          .upload(`${currentUserId}/${Date.now()}_${imageFile.name}`, imageFile);
+        if (error) throw error;
+        imageUrl = supabase.storage.from('recipe-images').getPublicUrl(data.path).data.publicUrl;
+      }
 
-        favoriteMeals.sort((a, b) => {
-            if (favoriteSort === 'name') {
-                return a.name.localeCompare(b.name);
-            } else if (favoriteSort === 'budget') {
-                return a.budget - b.budget;
-            } else if (favoriteSort === 'time') {
-                return a.timeToCook - b.timeToCook;
-            }
-            return 0;
-        });
+      if (videoFile) {
+        const { data, error } = await supabase.storage
+          .from('recipe-videos')
+          .upload(`${currentUserId}/${Date.now()}_${videoFile.name}`, videoFile);
+        if (error) throw error;
+        videoUrl = supabase.storage.from('recipe-videos').getPublicUrl(data.path).data.publicUrl;
+      }
 
-        return favoriteMeals;
+      const { data: recipe, error } = await supabase.from('recipes').insert({
+        user_id: currentUserId,
+        username,
+        name,
+        ingredients,
+        steps,
+        pain_level: painLevel,
+        budget,
+        time,
+        image: imageUrl,
+        video: videoUrl,
+        tags: [
+          painLevel.toLowerCase() === 'none' ? 'pain-safe' : 'pain-trigger',
+          budget < 2000 ? 'low-cost' : 'moderate-cost'
+        ]
+      }).select().single();
+      if (error) throw error;
+
+      showToast('Recipe submitted successfully!', 'success');
+      document.getElementById('recipe-form').reset();
+      history.pushState({}, '', `/recipe/${recipe.id}`);
+      navigate();
+    } catch (error) {
+      console.error('Error submitting recipe:', error);
+      showToast('Failed to submit recipe. Please try again.', 'error');
     }
+  }
 
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
+  async function toggleLike(recipeId, likeBtn) {
+    try {
+      const { data: existingLike, error } = await supabase
+        .from('likes')
+        .select('id')
+        .eq('recipe_id', recipeId)
+        .eq('user_id', currentUserId)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+
+      if (existingLike) {
+        await supabase.from('likes').delete().eq('id', existingLike.id);
+        if (likeBtn) {
+          likeBtn.querySelector('span').textContent = '🤍';
+          const count = parseInt(likeBtn.textContent.trim().split(' ')[1]) - 1;
+          likeBtn.textContent = `🤍 ${count}`;
         }
-        return array;
+      } else {
+        await supabase.from('likes').insert({ recipe_id: recipeId, user_id: currentUserId });
+        if (likeBtn) {
+          likeBtn.querySelector('span').textContent = '💖';
+          const count = parseInt(likeBtn.textContent.trim().split(' ')[1]) + 1;
+          likeBtn.textContent = `💖 ${count}`;
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
     }
+  }
 
-    async function handleRecipeSubmit(e) {
-        e.preventDefault();
-        const name = document.getElementById('recipe-name').value.trim();
-        const ingredients = document.getElementById('recipe-ingredients').value.split(',').map(i => i.trim());
-        const steps = document.getElementById('recipe-steps').value.trim();
-        const painLevel = document.getElementById('recipe-pain-level').value;
-        const budget = parseInt(document.getElementById('recipe-budget').value);
-        const time = parseInt(document.getElementById('recipe-time').value);
-        const imageFile = document.getElementById('recipe-image').files[0];
-        const videoFile = document.getElementById('recipe-video').files[0];
-        const username = document.getElementById('recipe-username').value.trim() || 'Anonymous';
+  async function toggleSave(recipeId, saveBtn) {
+    try {
+      const { data: existingSave, error } = await supabase
+        .from('saves')
+        .select('id')
+        .eq('recipe_id', recipeId)
+        .eq('user_id', currentUserId)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
 
-        if (!name || !ingredients.length || !steps || !painLevel || !budget || !time) {
-            showToast('Please fill in all required fields.', 'error');
-            return;
+      if (existingSave) {
+        await supabase.from('saves').delete().eq('id', existingSave.id);
+        if (saveBtn) {
+          saveBtn.querySelector('span').textContent = '💿';
+          const count = parseInt(saveBtn.textContent.trim().split(' ')[1]) - 1;
+          saveBtn.textContent = `💿 ${count}`;
         }
-
-        try {
-            let imageUrl = null;
-            let videoUrl = null;
-
-            if (imageFile) {
-                const { data, error } = await supabase.storage
-                    .from('recipe-images')
-                    .upload(`${currentUserId}/${Date.now()}_${imageFile.name}`, imageFile);
-                if (error) throw error;
-                imageUrl = supabase.storage.from('recipe-images').getPublicUrl(data.path).data.publicUrl;
-            }
-
-            if (videoFile) {
-                const { data, error } = await supabase.storage
-                    .from('recipe-videos')
-                    .upload(`${currentUserId}/${Date.now()}_${videoFile.name}`, videoFile);
-                if (error) throw error;
-                videoUrl = supabase.storage.from('recipe-videos').getPublicUrl(data.path).data.publicUrl;
-            }
-
-            const { data: recipe, error } = await supabase.from('recipes').insert({
-                user_id: currentUserId,
-                username,
-                name,
-                ingredients,
-                steps,
-                pain_level: painLevel,
-                budget,
-                time,
-                image: imageUrl,
-                video: videoUrl,
-                tags: [
-                    painLevel.toLowerCase() === 'none' ? 'pain-safe' : 'pain-trigger',
-                    budget < 2000 ? 'low-cost' : 'moderate-cost'
-                ]
-            }).select().single();
-            if (error) throw error;
-
-            showToast('Recipe submitted successfully!', 'success');
-            document.getElementById('recipe-form').reset();
-            history.pushState({}, '', `/recipe/${recipe.id}`);
-            navigate();
-        } catch (error) {
-            console.error('Error submitting recipe:', error);
-            showToast('Failed to submit recipe. Please try again.', 'error');
+      } else {
+        await supabase.from('saves').insert({ recipe_id: recipeId, user_id: currentUserId });
+        if (saveBtn) {
+          saveBtn.querySelector('span').textContent = '💾';
+          const count = parseInt(saveBtn.textContent.trim().split(' ')[1]) + 1;
+          saveBtn.textContent = `💾 ${count}`;
         }
+      }
+    } catch (error) {
+      console.error('Error toggling save:', error);
     }
+  }
 
-    async function toggleLike(recipeId, likeBtn) {
-        try {
-            const { data: existingLike, error } = await supabase
-                .from('likes')
-                .select('id')
-                .eq('recipe_id', recipeId)
-                .eq('user_id', currentUserId)
-                .single();
-            if (error && error.code !== 'PGRST116') throw error;
-
-            if (existingLike) {
-                await supabase.from('likes').delete().eq('id', existingLike.id);
-                if (likeBtn) {
-                    likeBtn.querySelector('span').textContent = '🤍';
-                    const count = parseInt(likeBtn.textContent.trim().split(' ')[1]) - 1;
-                    likeBtn.textContent = `🤍 ${count}`;
-                }
-            } else {
-                await supabase.from('likes').insert({ recipe_id: recipeId, user_id: currentUserId });
-                if (likeBtn) {
-                    likeBtn.querySelector('span').textContent = '💖';
-                    const count = parseInt(likeBtn.textContent.trim().split(' ')[1]) + 1;
-                    likeBtn.textContent = `💖 ${count}`;
-                }
-            }
-        } catch (error) {
-            console.error('Error toggling like:', error);
-        }
+  async function addComment(recipeId, content) {
+    try {
+      const username = 'Anonymous';
+      await supabase.from('comments').insert({
+        recipe_id: recipeId,
+        user_id: currentUserId,
+        username,
+        content
+      });
+    } catch (error) {
+      console.error('Error adding comment:', error);
     }
+  }
 
-    async function toggleSave(recipeId, saveBtn) {
-        try {
-            const { data: existingSave, error } = await supabase
-                .from('saves')
-                .select('id')
-                .eq('recipe_id', recipeId)
-                .eq('user_id', currentUserId)
-                .single();
-            if (error && error.code !== 'PGRST116') throw error;
-
-            if (existingSave) {
-                await supabase.from('saves').delete().eq('id', existingSave.id);
-                if (saveBtn) {
-                    saveBtn.querySelector('span').textContent = '💿';
-                    const count = parseInt(saveBtn.textContent.trim().split(' ')[1]) - 1;
-                    saveBtn.textContent = `💿 ${count}`;
-                }
-            } else {
-                await supabase.from('saves').insert({ recipe_id: recipeId, user_id: currentUserId });
-                if (saveBtn) {
-                    saveBtn.querySelector('span').textContent = '💾';
-                    const count = parseInt(saveBtn.textContent.trim().split(' ')[1]) + 1;
-                    saveBtn.textContent = `💾 ${count}`;
-                }
-            }
-        } catch (error) {
-            console.error('Error toggling save:', error);
-        }
+  async function pollLikes(recipeId, likeBtn) {
+    try {
+      const { data: likes, error } = await supabase
+        .from('likes')
+        .select('id, user_id')
+        .eq('recipe_id', recipeId);
+      if (error) throw error;
+      const isLiked = likes.some(like => like.user_id === currentUserId);
+      const count = likes.length;
+      if (likeBtn) {
+        likeBtn.innerHTML = `<span class="text-2xl">${isLiked ? '💖' : '🤍'}</span> ${count}`;
+      }
+    } catch (error) {
+      console.error('Error polling likes:', error);
     }
+  }
 
-    async function addComment(recipeId, content) {
-        try {
-            const username = 'Anonymous';
-            await supabase.from('comments').insert({
-                recipe_id: recipeId,
-                user_id: currentUserId,
-                username,
-                content
-            });
-        } catch (error) {
-            console.error('Error adding comment:', error);
-        }
-    }
-
-    async function pollLikes(recipeId, likeBtn) {
-        try {
-            const { data: likes, error } = await supabase
-                .from('likes')
-                .select('id, user_id')
-                .eq('recipe_id', recipeId);
-            if (error) throw error;
-            const isLiked = likes.some(like => like.user_id === currentUserId);
-            const count = likes.length;
-            if (likeBtn) {
-                likeBtn.innerHTML = `<span class="text-2xl">${isLiked ? '💖' : '🤍'}</span> ${count}`;
-            }
-        } catch (error) {
-            console.error('Error polling likes:', error);
-        }
-    }
-
-    async function pollComments(recipeId, commentsDiv, commentBtn) {
-        try {
-            const { data: comments, error } = await supabase
-                .from('comments')
-                .select('id, username, content, created_at')
-                .eq('recipe_id', recipeId)
-                .order('created_at', { ascending: false })
-                .limit(5);
-            if (error) throw error;
-            if (commentsDiv) {
-                const existingCommentIds = Array.from(commentsDiv.children).map(child =>
-                    child.dataset.commentId || child.querySelector('strong').textContent
-                );
-                const newComments = comments.filter(comment => !existingCommentIds.includes(comment.id));
-                newComments.forEach(comment => {
-                    const commentHtml = `
+  async function pollComments(recipeId, commentsDiv, commentBtn) {
+    try {
+      const { data: comments, error } = await supabase
+        .from('comments')
+        .select('id, username, content, created_at')
+        .eq('recipe_id', recipeId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      if (commentsDiv) {
+        const existingCommentIds = Array.from(commentsDiv.children).map(child =>
+          child.dataset.commentId || child.querySelector('strong').textContent
+        );
+        const newComments = comments.filter(comment => !existingCommentIds.includes(comment.id));
+        newComments.forEach(comment => {
+          const commentHtml = `
             <div class="text-sm text-gray-600 mb-1" data-comment-id="${comment.id}">
               <strong>${comment.username}:</strong> ${comment.content}
               <span class="text-xs text-gray-500">${timeAgo(comment.created_at)}</span>
             </div>
           `;
-                    commentsDiv.insertAdjacentHTML('afterbegin', commentHtml);
-                });
-            }
-            if (commentBtn) {
-                const { count } = await supabase
-                    .from('comments')
-                    .select('id', { count: 'exact' })
-                    .eq('recipe_id', recipeId);
-                commentBtn.innerHTML = `<span class="text-2xl">💬</span> ${count}`;
-            }
-        } catch (error) {
-            console.error('Error polling comments:', error);
-        }
+          commentsDiv.insertAdjacentHTML('afterbegin', commentHtml);
+        });
+      }
+      if (commentBtn) {
+        const { count } = await supabase
+          .from('comments')
+          .select('id', { count: 'exact' })
+          .eq('recipe_id', recipeId);
+        commentBtn.innerHTML = `<span class="text-2xl">💬</span> ${count}`;
+      }
+    } catch (error) {
+      console.error('Error polling comments:', error);
     }
+  }
 
-    function timeAgo(dateString) {
-        const now = new Date();
-        const date = new Date(dateString);
-        const seconds = Math.floor((now - date) / 1000);
-        const minutes = Math.floor(seconds / 60);
-        if (minutes < 1) return 'Just now';
-        if (minutes < 60) return `${minutes} min${minutes > 1 ? 's' : ''} ago`;
-        const hours = Math.floor(minutes / 60);
-        if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-        const days = Math.floor(hours / 24);
-        return `${days} day${days > 1 ? 's' : ''} ago`;
-    }
+  function timeAgo(dateString) {
+    const now = new Date();
+    const date = new Date(dateString);
+    const seconds = Math.floor((now - date) / 1000);
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes} min${minutes > 1 ? 's' : ''} ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    const days = Math.floor(hours / 24);
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  }
 
-    async function loadFeed(page = 1, limit = 10) {
-        try {
-            const start = (page - 1) * limit;
-            const end = start + limit - 1;
+  async function loadFeed(page = 1, limit = 10) {
+    try {
+      const start = (page - 1) * limit;
+      const end = start + limit - 1;
 
-            const { data: recipes, error } = await supabase
-                .from('recipes')
-                .select(`
+      const { data: recipes, error } = await supabase
+        .from('recipes')
+        .select(`
           *,
           likes (id, user_id),
           saves (id, user_id),
           comments (id, username, content, created_at)
         `)
-                .in('pain_level', [userState.painLevel, 'none'])
-                .order('created_at', { ascending: false })
-                .range(start, end);
+        .in('pain_level', [userState.painLevel, 'none'])
+        .order('created_at', { ascending: false })
+        .range(start, end);
 
-            if (error) throw error;
+      if (error) throw error;
 
-            return recipes.map(recipe => ({
-                ...recipe,
-                isLiked: recipe.likes.some(like => like.user_id === currentUserId),
-                isSaved: recipe.saves.some(save => save.user_id === currentUserId),
-                likeCount: recipe.likes.length,
-                saveCount: recipe.saves.length,
-                commentCount: recipe.comments.length
-            }));
-        } catch (error) {
-            console.error('Error loading feed:', error);
-            return [];
-        }
+      return recipes.map(recipe => ({
+        ...recipe,
+        isLiked: recipe.likes.some(like => like.user_id === currentUserId),
+        isSaved: recipe.saves.some(save => save.user_id === currentUserId),
+        likeCount: recipe.likes.length,
+        saveCount: recipe.saves.length,
+        commentCount: recipe.comments.length
+      }));
+    } catch (error) {
+      console.error('Error loading feed:', error);
+      return [];
     }
+  }
 
-    async function loadRecipeDetails(recipeId) {
-        try {
-            const { data: recipe, error } = await supabase
-                .from('recipes')
-                .select(`
+  async function loadRecipeDetails(recipeId) {
+    try {
+      const { data: recipe, error } = await supabase
+        .from('recipes')
+        .select(`
           *,
           likes (id, user_id),
           saves (id, user_id),
           comments (id, username, content, created_at)
         `)
-                .eq('id', recipeId)
-                .single();
-            if (error) throw error;
+        .eq('id', recipeId)
+        .single();
+      if (error) throw error;
 
-            return {
-                ...recipe,
-                isLiked: recipe.likes.some(like => like.user_id === currentUserId),
-                isSaved: recipe.saves.some(save => save.user_id === currentUserId),
-                likeCount: recipe.likes.length,
-                saveCount: recipe.saves.length,
-                commentCount: recipe.comments.length,
-                comments: recipe.comments.slice(0, 5)
-            };
-        } catch (error) {
-            console.error('Error loading recipe details:', error);
-            return null;
+      return {
+        ...recipe,
+        isLiked: recipe.likes.some(like => like.user_id === currentUserId),
+        isSaved: recipe.saves.some(save => save.user_id === currentUserId),
+        likeCount: recipe.likes.length,
+        saveCount: recipe.saves.length,
+        commentCount: recipe.comments.length,
+        comments: recipe.comments.slice(0, 5)
+      };
+    } catch (error) {
+      console.error('Error loading recipe details:', error);
+      return null;
+    }
+  }
+
+  function subscribeToComments(recipeId, callback) {
+    if (commentSubscriptions[recipeId]) {
+      supabase.removeChannel(commentSubscriptions[recipeId]);
+    }
+
+    const subscription = supabase
+      .channel(`public:comments:recipe_id=eq.${recipeId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments', filter: `recipe_id=eq.${recipeId}` }, payload => {
+        callback(payload.new);
+      })
+      .subscribe((status) => {
+        console.log('Comment subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log(`Subscribed to comments for recipe ${recipeId}`);
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          console.warn(`Comment subscription failed for recipe ${recipeId}, relying on polling`);
         }
-    }
+      });
 
-    function subscribeToComments(recipeId, callback) {
-        if (commentSubscriptions[recipeId]) {
-            supabase.removeChannel(commentSubscriptions[recipeId]);
+    commentSubscriptions[recipeId] = subscription;
+  }
+
+  function subscribeToLikes(recipeId, likeBtn) {
+    supabase
+      .channel(`public:likes:recipe_id=eq.${recipeId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: `recipe_id=eq.${recipeId}` }, async () => {
+        await pollLikes(recipeId, likeBtn);
+      })
+      .subscribe((status) => {
+        console.log('Like subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log(`Subscribed to likes for recipe ${recipeId}`);
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          console.warn(`Like subscription failed for recipe ${recipeId}, relying on polling`);
         }
+      });
+  }
 
-        const subscription = supabase
-            .channel(`public:comments:recipe_id=eq.${recipeId}`)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments', filter: `recipe_id=eq.${recipeId}` }, payload => {
-                callback(payload.new);
-            })
-            .subscribe((status) => {
-                console.log('Comment subscription status:', status);
-                if (status === 'SUBSCRIBED') {
-                    console.log(`Subscribed to comments for recipe ${recipeId}`);
-                } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-                    console.warn(`Comment subscription failed for recipe ${recipeId}, relying on polling`);
-                }
-            });
+  function startPolling(recipeId, likeBtn, commentsDiv, commentBtn) {
+    if (pollingIntervals[recipeId]) return;
+    pollingIntervals[recipeId] = setInterval(() => {
+      pollLikes(recipeId, likeBtn);
+      pollComments(recipeId, commentsDiv, commentBtn);
+    }, 10000);
+    console.log(`Started polling for recipe ${recipeId}`);
+  }
 
-        commentSubscriptions[recipeId] = subscription;
+  function stopPolling(recipeId) {
+    if (pollingIntervals[recipeId]) {
+      clearInterval(pollingIntervals[recipeId]);
+      delete pollingIntervals[recipeId];
+      console.log(`Stopped polling for recipe ${recipeId}`);
     }
+  }
 
-    function subscribeToLikes(recipeId, likeBtn) {
-        supabase
-            .channel(`public:likes:recipe_id=eq.${recipeId}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: `recipe_id=eq.${recipeId}` }, async () => {
-                await pollLikes(recipeId, likeBtn);
-            })
-            .subscribe((status) => {
-                console.log('Like subscription status:', status);
-                if (status === 'SUBSCRIBED') {
-                    console.log(`Subscribed to likes for recipe ${recipeId}`);
-                } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-                    console.warn(`Like subscription failed for recipe ${recipeId}, relying on polling`);
-                }
-            });
-    }
+  initAuth();
+  loadUserState();
+  loadFavorites();
+  loadBlacklisted();
+  loadMeals();
 
-    function startPolling(recipeId, likeBtn, commentsDiv, commentBtn) {
-        if (pollingIntervals[recipeId]) return;
-        pollingIntervals[recipeId] = setInterval(() => {
-            pollLikes(recipeId, likeBtn);
-            pollComments(recipeId, commentsDiv, commentBtn);
-        }, 10000);
-        console.log(`Started polling for recipe ${recipeId}`);
-    }
+  navToggle.addEventListener('click', () => {
+    mobileMenu.classList.toggle('hidden');
+  });
 
-    function stopPolling(recipeId) {
-        if (pollingIntervals[recipeId]) {
-            clearInterval(pollingIntervals[recipeId]);
-            delete pollingIntervals[recipeId];
-            console.log(`Stopped polling for recipe ${recipeId}`);
-        }
-    }
+  filterBtn.addEventListener('click', () => {
+    filterModal.classList.remove('hidden');
+  });
 
-    initAuth();
-    loadUserState();
-    loadFavorites();
-    loadBlacklisted();
-    loadMeals();
+  mobileFilterBtn.addEventListener('click', () => {
+    filterModal.classList.remove('hidden');
+  });
 
-    navToggle.addEventListener('click', () => {
-        mobileMenu.classList.toggle('hidden');
-    });
+  closeFilterBtn.addEventListener('click', () => {
+    filterModal.classList.add('hidden');
+  });
 
-    filterBtn.addEventListener('click', () => {
-        filterModal.classList.remove('hidden');
-    });
+  budgetSlider.addEventListener('input', () => {
+    budgetValue.textContent = `₦${budgetSlider.value}`;
+  });
 
-    mobileFilterBtn.addEventListener('click', () => {
-        filterModal.classList.remove('hidden');
-    });
+  filterForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    userState.painLevel = document.getElementById('pain-level').value;
+    userState.budget = parseInt(budgetSlider.value);
+    userState.energyLevel = document.getElementById('energy-level').value;
+    const ingredientsInput = document.getElementById('ingredients').value;
+    userState.ingredients = ingredientsInput
+      .split(',')
+      .map(ing => ing.trim())
+      .filter(ing => ing.length > 0);
+    userState.excludeIngredients = document.getElementById('exclude-ingredients').checked;
+    saveUserState();
+    filterModal.classList.add('hidden');
+    navigate();
+  });
 
-    closeFilterBtn.addEventListener('click', () => {
-        filterModal.classList.add('hidden');
-    });
-
-    budgetSlider.addEventListener('input', () => {
-        budgetValue.textContent = `₦${budgetSlider.value}`;
-    });
-
-    filterForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        userState.painLevel = document.getElementById('pain-level').value;
-        userState.budget = parseInt(budgetSlider.value);
-        userState.energyLevel = document.getElementById('energy-level').value;
-        const ingredientsInput = document.getElementById('ingredients').value;
-        userState.ingredients = ingredientsInput
-            .split(',')
-            .map(ing => ing.trim())
-            .filter(ing => ing.length > 0);
-        userState.excludeIngredients = document.getElementById('exclude-ingredients').checked;
-        saveUserState();
-        filterModal.classList.add('hidden');
-        navigate();
-    });
-
-    const routes = {
-        '/home': () => {
-            let filteredMeals = filterMeals();
-            if (document.getElementById('shuffle-btn') && document.getElementById('shuffle-btn').dataset.shuffled === 'true') {
-                filteredMeals = shuffleArray([...filteredMeals]);
-            }
-            const mealCards = filteredMeals.length > 0
-                ? filteredMeals.map(meal => `
+  const routes = {
+    '/home': () => {
+      let filteredMeals = filterMeals();
+      if (document.getElementById('shuffle-btn') && document.getElementById('shuffle-btn').dataset.shuffled === 'true') {
+        filteredMeals = shuffleArray([...filteredMeals]);
+      }
+      const mealCards = filteredMeals.length > 0
+        ? filteredMeals.map(meal => `
           <div class="bg-white p-4 rounded-t-lg shadow-md cursor-pointer" data-recipe-id="${meal.id || ''}" data-source="${meal.source || 'json'}">
             <img src="${meal.imageUrl || './public/images/placeholder.jpg'}" alt="${meal.name}" class="w-full h-32 object-cover rounded-t-lg">
             <div class="flex justify-between items-center mt-2">
@@ -921,12 +921,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
           </div>
         `).join('')
-                : `
+        : `
           <div class="text-center text-gray-600 p-6">
             <p>No meals match your filters. Don't worry, try adding some ingredients you have or loosening your filters! 💕</p>
           </div>
         `;
-            return `
+      return `
         <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
           <h1 class="text-2xl font-bold">Meal Suggestions</h1>
           <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -946,11 +946,11 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
       `;
-        },
-        '/for-you': () => {
-            let feedPage = 1;
-            let feedLoading = true;
-            const skeletonCard = `
+    },
+    '/for-you': () => {
+      let feedPage = 1;
+      let feedLoading = true;
+      const skeletonCard = `
         <div class="bg-white p-4 rounded-t-lg shadow-md mb-4 animate-pulse">
           <div class="w-full h-48 bg-gray-200 rounded-t-lg"></div>
           <div class="mt-2 h-6 bg-gray-200 rounded w-3/4"></div>
@@ -966,7 +966,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
       `;
-            return `
+      return `
         <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
           <h1 class="text-2xl font-bold">For You</h1>
           <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -979,12 +979,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <button id="load-more-btn" class="mt-4 w-full bg-teal-600 text-white p-2 rounded hover:bg-teal-700 hidden">Load More</button>
         </div>
       `;
-        },
-        '/favorites': () => {
-            const favoriteMeals = filterAndSortFavorites();
-            const uniqueTags = [...new Set(meals.flatMap(meal => meal.tags))];
-            const mealCards = favoriteMeals.length > 0
-                ? favoriteMeals.map(meal => `
+    },
+    '/favorites': () => {
+      const favoriteMeals = filterAndSortFavorites();
+      const uniqueTags = [...new Set(meals.flatMap(meal => meal.tags))];
+      const mealCards = favoriteMeals.length > 0
+        ? favoriteMeals.map(meal => `
           <div class="bg-white p-4 rounded-t-lg shadow-md cursor-pointer" data-recipe-id="${meal.id || ''}" data-source="${meal.source || 'json'}">
             <img src="${meal.imageUrl || './public/images/placeholder.jpg'}" alt="${meal.name}" class="w-full h-32 object-cover rounded-t-lg">
             <div class="flex justify-between items-center mt-2">
@@ -1000,12 +1000,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
         `).join('')
-                : `
+        : `
           <div class="text-center text-gray-600 p-6">
             <p>You haven't favorited any meals yet. Find some on the Home page! 💕</p>
           </div>
         `;
-            return `
+      return `
         <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
           <h1 class="text-2xl font-bold">Favorites</h1>
           <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -1043,8 +1043,8 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
       `;
-        },
-        '/add-meal': () => `
+    },
+    '/add-meal': () => `
       <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
         <h1 class="text-2xl font-bold">Add a Meal</h1>
         <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -1121,7 +1121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </form>
       </div>
     `,
-        '/my-log': () => `
+    '/my-log': () => `
       <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
         <h1 class="text-2xl font-bold">My Log</h1>
         <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -1134,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     `,
-        '/relief-hub': () => `
+    '/relief-hub': () => `
       <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
         <h1 class="text-2xl font-bold">Relief Hub</h1>
         <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -1147,9 +1147,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     `,
-        '/blogs': () => {
-            const uniqueTags = ['Trigger', 'Comfort', 'Budget Hack'];
-            return `
+    '/blogs': () => {
+      const uniqueTags = ['Trigger', 'Comfort', 'Budget Hack'];
+      return `
     <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
       <h1 class="text-2xl font-bold">Blogs</h1>
       <div class="flex gap-2">
@@ -1195,12 +1195,12 @@ document.addEventListener('DOMContentLoaded', () => {
       <button id="load-more-blogs" class="mt-4 w-full bg-teal-600 text-white p-2 rounded hover:bg-teal-700 hidden">Load More</button>
     </div>
   `;
-        },
+    },
 
-        '/blog/:id': async (id) => {
-            const blog = await loadBlogDetails(id);
-            if (!blog) {
-                return `
+    '/blog/:id': async (id) => {
+      const blog = await loadBlogDetails(id);
+      if (!blog) {
+        return `
       <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
         <h1 class="text-2xl font-bold">Blog Not Found</h1>
         <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -1209,9 +1209,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="text-center text-gray-600">Sorry, this blog could not be found! 💔</p>
       </div>
     `;
-            }
+      }
 
-            return `
+      return `
     <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
       <h1 class="text-2xl font-bold">${blog.title}</h1>
       <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -1255,9 +1255,9 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     </div>
   `;
-        },
+    },
 
-        '/settings': () => `
+    '/settings': () => `
       <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
         <h1 class="text-2xl font-bold">Settings</h1>
         <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -1270,10 +1270,10 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     `,
-        '/recipe/:id': async (id) => {
-            const recipe = await loadRecipeDetails(id);
-            if (!recipe) {
-                return `
+    '/recipe/:id': async (id) => {
+      const recipe = await loadRecipeDetails(id);
+      if (!recipe) {
+        return `
           <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
             <h1 class="text-2xl font-bold">Recipe Not Found</h1>
             <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -1282,9 +1282,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <p class="text-center text-gray-600">Sorry, this recipe could not be found! 💔</p>
           </div>
         `;
-            }
+      }
 
-            return `
+      return `
         <header class="bg-teal-700 text-white p-4 rounded-t-lg flex justify-between items-center">
           <h1 class="text-2xl font-bold">${recipe.name}</h1>
           <button onclick="history.back()" class="text-teal-200 hover:text-white text-sm">Back</button>
@@ -1349,124 +1349,124 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
       `;
-        }
-    };
+    }
+  };
 
-    const defaultRoute = '/home';
+  const defaultRoute = '/home';
 
-    function navigate() {
-        let path = window.location.pathname || defaultRoute;
-        let routeHandler = null;
-        let params = null;
+  function navigate() {
+    let path = window.location.pathname || defaultRoute;
+    let routeHandler = null;
+    let params = null;
 
-        const recipeMatch = path.match(/^\/recipe\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
-        const blogMatch = path.match(/^\/blog\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
-        if (recipeMatch) {
-            path = '/recipe/:id';
-            params = recipeMatch[1];
-        } else if (blogMatch) {
-            path = '/blog/:id';
-            params = blogMatch[1];
-        }
-
-        routeHandler = routes[path] || routes[defaultRoute];
-        const contentDiv = document.getElementById('content');
-        if (params) {
-            routeHandler(params).then(html => {
-                contentDiv.innerHTML = html;
-                attachEventListeners();
-            });
-        } else {
-            contentDiv.innerHTML = routeHandler();
-            attachEventListeners();
-        }
+    const recipeMatch = path.match(/^\/recipe\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+    const blogMatch = path.match(/^\/blog\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+    if (recipeMatch) {
+      path = '/recipe/:id';
+      params = recipeMatch[1];
+    } else if (blogMatch) {
+      path = '/blog/:id';
+      params = blogMatch[1];
     }
 
-    function attachEventListeners() {
-        const shuffleBtn = document.getElementById('shuffle-btn');
-        if (shuffleBtn) {
-            shuffleBtn.addEventListener('click', () => {
-                shuffleBtn.dataset.shuffled = 'true';
-                navigate();
-                setTimeout(() => { shuffleBtn.dataset.shuffled = 'false'; }, 0);
-            });
+    routeHandler = routes[path] || routes[defaultRoute];
+    const contentDiv = document.getElementById('content');
+    if (params) {
+      routeHandler(params).then(html => {
+        contentDiv.innerHTML = html;
+        attachEventListeners();
+      });
+    } else {
+      contentDiv.innerHTML = routeHandler();
+      attachEventListeners();
+    }
+  }
+
+  function attachEventListeners() {
+    const shuffleBtn = document.getElementById('shuffle-btn');
+    if (shuffleBtn) {
+      shuffleBtn.addEventListener('click', () => {
+        shuffleBtn.dataset.shuffled = 'true';
+        navigate();
+        setTimeout(() => { shuffleBtn.dataset.shuffled = 'false'; }, 0);
+      });
+    }
+
+    const toggleBlogFormBtn = document.getElementById('toggle-blog-form');
+    if (toggleBlogFormBtn) {
+      toggleBlogFormBtn.addEventListener('click', () => {
+        const blogForm = document.getElementById('blog-form');
+        blogForm.classList.toggle('hidden');
+        toggleBlogFormBtn.textContent = blogForm.classList.contains('hidden') ? '➕' : '➖';
+      });
+    }
+
+    const recipeForm = document.getElementById('recipe-form');
+    if (recipeForm) {
+      recipeForm.addEventListener('submit', handleRecipeSubmit);
+    }
+
+    const sortFavorites = document.getElementById('sort-favorites');
+    if (sortFavorites) {
+      sortFavorites.addEventListener('change', (e) => {
+        favoriteSort = e.target.value;
+        navigate();
+      });
+    }
+
+    const filterPainLevel = document.getElementById('filter-pain-level');
+    if (filterPainLevel) {
+      filterPainLevel.addEventListener('change', (e) => {
+        favoriteFilter.painLevel = e.target.value;
+        navigate();
+      });
+    }
+
+    const filterTags = document.getElementById('filter-tags');
+    if (filterTags) {
+      filterTags.addEventListener('change', (e) => {
+        favoriteFilter.tag = e.target.value;
+        navigate();
+      });
+    }
+
+    document.querySelectorAll('.favorite-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const mealName = btn.dataset.mealName;
+        toggleFavorite(mealName);
+      });
+    });
+
+    document.querySelectorAll('.blacklist-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const mealName = btn.dataset.mealName;
+        blacklistMeal(mealName);
+      });
+    });
+
+    document.querySelectorAll('[data-recipe-id]').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.favorite-btn') || e.target.closest('.blacklist-btn')) return;
+        const recipeId = card.dataset.recipeId;
+        const source = card.dataset.source;
+        if (source === 'supabase' && recipeId) {
+          history.pushState({}, '', `/recipe/${recipeId}`);
+          navigate();
         }
+      });
+    });
 
-        const toggleBlogFormBtn = document.getElementById('toggle-blog-form');
-        if (toggleBlogFormBtn) {
-            toggleBlogFormBtn.addEventListener('click', () => {
-                const blogForm = document.getElementById('blog-form');
-                blogForm.classList.toggle('hidden');
-                toggleBlogFormBtn.textContent = blogForm.classList.contains('hidden') ? '➕' : '➖';
-            });
-        }
+    if (window.location.pathname === '/for-you') {
+      let feedPage = 1;
+      const feedContent = document.getElementById('feed-content');
+      const loadMoreBtn = document.getElementById('load-more-btn');
 
-        const recipeForm = document.getElementById('recipe-form');
-        if (recipeForm) {
-            recipeForm.addEventListener('submit', handleRecipeSubmit);
-        }
-
-        const sortFavorites = document.getElementById('sort-favorites');
-        if (sortFavorites) {
-            sortFavorites.addEventListener('change', (e) => {
-                favoriteSort = e.target.value;
-                navigate();
-            });
-        }
-
-        const filterPainLevel = document.getElementById('filter-pain-level');
-        if (filterPainLevel) {
-            filterPainLevel.addEventListener('change', (e) => {
-                favoriteFilter.painLevel = e.target.value;
-                navigate();
-            });
-        }
-
-        const filterTags = document.getElementById('filter-tags');
-        if (filterTags) {
-            filterTags.addEventListener('change', (e) => {
-                favoriteFilter.tag = e.target.value;
-                navigate();
-            });
-        }
-
-        document.querySelectorAll('.favorite-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const mealName = btn.dataset.mealName;
-                toggleFavorite(mealName);
-            });
-        });
-
-        document.querySelectorAll('.blacklist-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const mealName = btn.dataset.mealName;
-                blacklistMeal(mealName);
-            });
-        });
-
-        document.querySelectorAll('[data-recipe-id]').forEach(card => {
-            card.addEventListener('click', (e) => {
-                if (e.target.closest('.favorite-btn') || e.target.closest('.blacklist-btn')) return;
-                const recipeId = card.dataset.recipeId;
-                const source = card.dataset.source;
-                if (source === 'supabase' && recipeId) {
-                    history.pushState({}, '', `/recipe/${recipeId}`);
-                    navigate();
-                }
-            });
-        });
-
-        if (window.location.pathname === '/for-you') {
-            let feedPage = 1;
-            const feedContent = document.getElementById('feed-content');
-            const loadMoreBtn = document.getElementById('load-more-btn');
-
-            async function renderFeed() {
-                const recipes = await loadFeed(feedPage);
-                if (recipes.length > 0) {
-                    const cards = recipes.map(recipe => `
+      async function renderFeed() {
+        const recipes = await loadFeed(feedPage);
+        if (recipes.length > 0) {
+          const cards = recipes.map(recipe => `
             <div class="bg-white p-4 rounded-t-lg shadow-md mb-4 cursor-pointer" data-recipe-id="${recipe.id}" data-source="supabase">
               ${recipe.video_url ? `
                 <video controls class="w-full h-48 object-cover rounded-t-lg">
@@ -1512,171 +1512,171 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
           `).join('');
-                    feedContent.innerHTML = cards;
-                    loadMoreBtn.classList.remove('hidden');
+          feedContent.innerHTML = cards;
+          loadMoreBtn.classList.remove('hidden');
 
-                    recipes.forEach(recipe => {
-                        const likeBtn = feedContent.querySelector(`.like-btn[data-recipe-id="${recipe.id}"]`);
-                        if (likeBtn) subscribeToLikes(recipe.id, likeBtn);
-                    });
-                } else {
-                    feedContent.innerHTML += `<p class="text-center text-gray-600">No more recipes to show.</p>`;
-                    loadMoreBtn.classList.add('hidden');
-                }
-            }
-
-            renderFeed();
-
-            loadMoreBtn.addEventListener('click', () => {
-                feedPage++;
-                renderFeed();
-            });
-
-            feedContent.addEventListener('click', e => {
-                const likeBtn = e.target.closest('.like-btn');
-                const saveBtn = e.target.closest('.save-btn');
-                const commentBtn = e.target.closest('.comment-btn');
-                if (likeBtn) {
-                    e.stopPropagation();
-                    toggleLike(likeBtn.dataset.recipeId, likeBtn);
-                } else if (saveBtn) {
-                    e.stopPropagation();
-                    toggleSave(saveBtn.dataset.recipeId, saveBtn);
-                } else if (commentBtn) {
-                    e.stopPropagation();
-                    const form = commentBtn.nextElementSibling.querySelector('input');
-                    if (form) form.focus();
-                }
-            });
-
-            feedContent.addEventListener('submit', e => {
-                e.preventDefault();
-                e.stopPropagation();
-                const form = e.target.closest('.comment-form');
-                if (form) {
-                    const input = form.querySelector('input');
-                    const content = input.value.trim();
-                    if (content) {
-                        addComment(form.dataset.feedComment, content);
-                        input.value = '';
-                    }
-                }
-            });
+          recipes.forEach(recipe => {
+            const likeBtn = feedContent.querySelector(`.like-btn[data-recipe-id="${recipe.id}"]`);
+            if (likeBtn) subscribeToLikes(recipe.id, likeBtn);
+          });
+        } else {
+          feedContent.innerHTML += `<p class="text-center text-gray-600">No more recipes to show.</p>`;
+          loadMoreBtn.classList.add('hidden');
         }
+      }
 
-        if (window.location.pathname.match(/^\/recipe\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-            const recipeId = window.location.pathname.split('/recipe/')[1];
-            const contentDiv = document.getElementById('content');
+      renderFeed();
 
-            const likeBtn = contentDiv.querySelector('.like-btn');
-            const saveBtn = contentDiv.querySelector('.save-btn');
-            const commentBtn = contentDiv.querySelector('.comment-btn');
-            const commentForm = contentDiv.querySelector('.comment-form');
-            const commentsDiv = contentDiv.querySelector(`#comments-${recipeId}`);
-            const loadMoreComments = contentDiv.querySelector('.load-more-comments');
+      loadMoreBtn.addEventListener('click', () => {
+        feedPage++;
+        renderFeed();
+      });
 
-            if (likeBtn) {
-                likeBtn.addEventListener('click', () => toggleLike(recipeId, likeBtn));
-                subscribeToLikes(recipeId, likeBtn);
-            }
+      feedContent.addEventListener('click', e => {
+        const likeBtn = e.target.closest('.like-btn');
+        const saveBtn = e.target.closest('.save-btn');
+        const commentBtn = e.target.closest('.comment-btn');
+        if (likeBtn) {
+          e.stopPropagation();
+          toggleLike(likeBtn.dataset.recipeId, likeBtn);
+        } else if (saveBtn) {
+          e.stopPropagation();
+          toggleSave(saveBtn.dataset.recipeId, saveBtn);
+        } else if (commentBtn) {
+          e.stopPropagation();
+          const form = commentBtn.nextElementSibling.querySelector('input');
+          if (form) form.focus();
+        }
+      });
 
-            if (saveBtn) {
-                saveBtn.addEventListener('click', () => toggleSave(recipeId, saveBtn));
-            }
+      feedContent.addEventListener('submit', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        const form = e.target.closest('.comment-form');
+        if (form) {
+          const input = form.querySelector('input');
+          const content = input.value.trim();
+          if (content) {
+            addComment(form.dataset.feedComment, content);
+            input.value = '';
+          }
+        }
+      });
+    }
 
-            if (commentBtn) {
-                commentBtn.addEventListener('click', () => {
-                    const input = commentForm.querySelector('input');
-                    if (input) input.focus();
-                });
-            }
+    if (window.location.pathname.match(/^\/recipe\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      const recipeId = window.location.pathname.split('/recipe/')[1];
+      const contentDiv = document.getElementById('content');
 
-            if (commentForm) {
-                commentForm.addEventListener('submit', e => {
-                    e.preventDefault();
-                    const input = commentForm.querySelector('input');
-                    const content = input.value.trim();
-                    if (content) {
-                        addComment(recipeId, content);
-                        input.value = '';
-                    }
-                });
-            }
+      const likeBtn = contentDiv.querySelector('.like-btn');
+      const saveBtn = contentDiv.querySelector('.save-btn');
+      const commentBtn = contentDiv.querySelector('.comment-btn');
+      const commentForm = contentDiv.querySelector('.comment-form');
+      const commentsDiv = contentDiv.querySelector(`#comments-${recipeId}`);
+      const loadMoreComments = contentDiv.querySelector('.load-more-comments');
 
-            if (commentsDiv && commentBtn) {
-                subscribeToComments(recipeId, (newComment) => {
-                    const commentHtml = `
+      if (likeBtn) {
+        likeBtn.addEventListener('click', () => toggleLike(recipeId, likeBtn));
+        subscribeToLikes(recipeId, likeBtn);
+      }
+
+      if (saveBtn) {
+        saveBtn.addEventListener('click', () => toggleSave(recipeId, saveBtn));
+      }
+
+      if (commentBtn) {
+        commentBtn.addEventListener('click', () => {
+          const input = commentForm.querySelector('input');
+          if (input) input.focus();
+        });
+      }
+
+      if (commentForm) {
+        commentForm.addEventListener('submit', e => {
+          e.preventDefault();
+          const input = commentForm.querySelector('input');
+          const content = input.value.trim();
+          if (content) {
+            addComment(recipeId, content);
+            input.value = '';
+          }
+        });
+      }
+
+      if (commentsDiv && commentBtn) {
+        subscribeToComments(recipeId, (newComment) => {
+          const commentHtml = `
             <div class="text-sm text-gray-600 mb-1" data-comment-id="${newComment.id}">
               <strong>${newComment.username}:</strong> ${newComment.content}
               <span class="text-xs text-gray-500">${timeAgo(newComment.created_at)}</span>
             </div>
           `;
-                    commentsDiv.insertAdjacentHTML('afterbegin', commentHtml);
-                    const count = parseInt(commentBtn.textContent.trim().split(' ')[1]) + 1;
-                    commentBtn.innerHTML = `<span class="text-2xl">💬</span> ${count}`;
-                });
-                startPolling(recipeId, likeBtn, commentsDiv, commentBtn);
-            }
+          commentsDiv.insertAdjacentHTML('afterbegin', commentHtml);
+          const count = parseInt(commentBtn.textContent.trim().split(' ')[1]) + 1;
+          commentBtn.innerHTML = `<span class="text-2xl">💬</span> ${count}`;
+        });
+        startPolling(recipeId, likeBtn, commentsDiv, commentBtn);
+      }
 
-            if (loadMoreComments) {
-                loadMoreComments.addEventListener('click', async () => {
-                    const offset = parseInt(loadMoreComments.dataset.offset);
-                    const limit = 5;
-                    const { data: moreComments, error } = await supabase
-                        .from('comments')
-                        .select('id, username, content, created_at')
-                        .eq('recipe_id', recipeId)
-                        .order('created_at', { ascending: false })
-                        .range(offset, offset + limit - 1);
-                    if (error) {
-                        console.error('Error loading more comments:', error);
-                        return;
-                    }
-                    if (commentsDiv && moreComments.length > 0) {
-                        moreComments.forEach(comment => {
-                            const commentHtml = `
+      if (loadMoreComments) {
+        loadMoreComments.addEventListener('click', async () => {
+          const offset = parseInt(loadMoreComments.dataset.offset);
+          const limit = 5;
+          const { data: moreComments, error } = await supabase
+            .from('comments')
+            .select('id, username, content, created_at')
+            .eq('recipe_id', recipeId)
+            .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1);
+          if (error) {
+            console.error('Error loading more comments:', error);
+            return;
+          }
+          if (commentsDiv && moreComments.length > 0) {
+            moreComments.forEach(comment => {
+              const commentHtml = `
                 <div class="text-sm text-gray-600 mb-1" data-comment-id="${comment.id}">
                   <strong>${comment.username}:</strong> ${comment.content}
                   <span class="text-xs text-gray-500">${timeAgo(comment.created_at)}</span>
                 </div>
               `;
-                            commentsDiv.insertAdjacentHTML('beforeend', commentHtml);
-                        });
-                        loadMoreComments.dataset.offset = (offset + moreComments.length).toString();
-                        if (moreComments.length < limit) {
-                            loadMoreComments.remove();
-                        }
-                    } else {
-                        loadMoreComments.remove();
-                    }
-                });
-            }
-
-            window.addEventListener('popstate', () => {
-                stopPolling(recipeId);
-            }, { once: true });
-        }
-
-        const blogForm = document.getElementById('blog-form');
-        if (blogForm) {
-            blogForm.addEventListener('submit', handleBlogSubmit);
-        }
-
-        const filterBlogTags = document.getElementById('filter-blog-tags');
-        if (filterBlogTags) {
-            filterBlogTags.addEventListener('change', (e) => {
-                blogFilter.tag = e.target.value;
-                navigate();
+              commentsDiv.insertAdjacentHTML('beforeend', commentHtml);
             });
-        }
+            loadMoreComments.dataset.offset = (offset + moreComments.length).toString();
+            if (moreComments.length < limit) {
+              loadMoreComments.remove();
+            }
+          } else {
+            loadMoreComments.remove();
+          }
+        });
+      }
 
-        const blogList = document.getElementById('blog-list');
-        if (blogList) {
-            let blogPage = 1;
-            async function renderBlogs() {
-                const blogs = await loadBlogs(blogPage);
-                if (blogs.length > 0) {
-                    blogList.innerHTML = blogs.map(blog => `
+      window.addEventListener('popstate', () => {
+        stopPolling(recipeId);
+      }, { once: true });
+    }
+
+    const blogForm = document.getElementById('blog-form');
+    if (blogForm) {
+      blogForm.addEventListener('submit', handleBlogSubmit);
+    }
+
+    const filterBlogTags = document.getElementById('filter-blog-tags');
+    if (filterBlogTags) {
+      filterBlogTags.addEventListener('change', (e) => {
+        blogFilter.tag = e.target.value;
+        navigate();
+      });
+    }
+
+    const blogList = document.getElementById('blog-list');
+    if (blogList) {
+      let blogPage = 1;
+      async function renderBlogs() {
+        const blogs = await loadBlogs(blogPage);
+        if (blogs.length > 0) {
+          blogList.innerHTML = blogs.map(blog => `
         <div class="bg-white p-4 rounded-t-lg shadow-md cursor-pointer" data-blog-id="${blog.id}">
           <h3 class="text-lg font-semibold text-teal-700">${blog.title}</h3>
           <p class="text-sm text-gray-600">by ${blog.username}</p>
@@ -1695,144 +1695,145 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
       `).join('');
-                    document.getElementById('load-more-blogs').classList.remove('hidden');
-                } else {
-                    blogList.innerHTML = `<p class="text-center text-gray-600">No blogs available.</p>`;
-                    document.getElementById('load-more-blogs').classList.add('hidden');
-                }
-            }
-            renderBlogs();
-            document.getElementById('load-more-blogs').addEventListener('click', () => {
-                blogPage++;
-                renderBlogs();
-            });
+          document.getElementById('load-more-blogs').classList.remove('hidden');
+        } else {
+          blogList.innerHTML = `<p class="text-center text-gray-600">No blogs available.</p>`;
+          document.getElementById('load-more-blogs').classList.add('hidden');
         }
+      }
+      renderBlogs();
+      document.getElementById('load-more-blogs').addEventListener('click', () => {
+        blogPage++;
+        renderBlogs();
+      });
+    }
 
-        document.querySelectorAll('[data-blog-id]').forEach(card => {
-            card.addEventListener('click', (e) => {
-                if (e.target.closest('.blog-like-btn') || e.target.closest('.blog-comment-btn')) return;
-                const blogId = card.dataset.blogId;
-                history.pushState({}, '', `/blog/${blogId}`);
-                navigate();
-            });
+    document.querySelectorAll('[data-blog-id]').forEach(card => {
+      card.addEventListener('click', (e) => {
+    if (e.target.closest('.blog-like-btn') || e.target.closest('.blog-comment-btn')) return;
+    const blogId = card.dataset.blogId;
+    console.log('Navigating to blog:', blogId); // Debug log
+    history.pushState({}, '', `/blog/${blogId}`);
+    navigate();
+});
+    });
+
+    document.querySelectorAll('.blog-like-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleBlogLike(btn.dataset.blogId, btn);
+      });
+    });
+
+    document.querySelectorAll('.blog-comment-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const form = document.querySelector(`.blog-comment-form[data-blog-id="${btn.dataset.blogId}"]`);
+        if (form) form.querySelector('input').focus();
+      });
+    });
+
+    if (window.location.pathname.match(/^\/blog\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      const blogId = window.location.pathname.split('/blog/')[1];
+      const contentDiv = document.getElementById('content');
+
+      const likeBtn = contentDiv.querySelector('.blog-like-btn');
+      const commentBtn = contentDiv.querySelector('.blog-comment-btn');
+      const commentForm = contentDiv.querySelector('.blog-comment-form');
+      const commentsDiv = contentDiv.querySelector(`#blog-comments-${blogId}`);
+      const loadMoreComments = contentDiv.querySelector('.load-more-blog-comments');
+
+      if (likeBtn) {
+        likeBtn.addEventListener('click', () => toggleBlogLike(blogId, likeBtn));
+        subscribeToBlogLikes(blogId, likeBtn);
+      }
+
+      if (commentBtn) {
+        commentBtn.addEventListener('click', () => {
+          const input = commentForm.querySelector('input');
+          if (input) input.focus();
         });
+      }
 
-        document.querySelectorAll('.blog-like-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleBlogLike(btn.dataset.blogId, btn);
-            });
+      if (commentForm) {
+        commentForm.addEventListener('submit', e => {
+          e.preventDefault();
+          const input = commentForm.querySelector('input');
+          const content = input.value.trim();
+          if (content) {
+            addBlogComment(blogId, content);
+            input.value = '';
+          }
         });
+      }
 
-        document.querySelectorAll('.blog-comment-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const form = document.querySelector(`.blog-comment-form[data-blog-id="${btn.dataset.blogId}"]`);
-                if (form) form.querySelector('input').focus();
-            });
-        });
-
-        if (window.location.pathname.match(/^\/blog\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-            const blogId = window.location.pathname.split('/blog/')[1];
-            const contentDiv = document.getElementById('content');
-
-            const likeBtn = contentDiv.querySelector('.blog-like-btn');
-            const commentBtn = contentDiv.querySelector('.blog-comment-btn');
-            const commentForm = contentDiv.querySelector('.blog-comment-form');
-            const commentsDiv = contentDiv.querySelector(`#blog-comments-${blogId}`);
-            const loadMoreComments = contentDiv.querySelector('.load-more-blog-comments');
-
-            if (likeBtn) {
-                likeBtn.addEventListener('click', () => toggleBlogLike(blogId, likeBtn));
-                subscribeToBlogLikes(blogId, likeBtn);
-            }
-
-            if (commentBtn) {
-                commentBtn.addEventListener('click', () => {
-                    const input = commentForm.querySelector('input');
-                    if (input) input.focus();
-                });
-            }
-
-            if (commentForm) {
-                commentForm.addEventListener('submit', e => {
-                    e.preventDefault();
-                    const input = commentForm.querySelector('input');
-                    const content = input.value.trim();
-                    if (content) {
-                        addBlogComment(blogId, content);
-                        input.value = '';
-                    }
-                });
-            }
-
-            if (commentsDiv && commentBtn) {
-                subscribeToBlogComments(blogId, (newComment) => {
-                    const commentHtml = `
+      if (commentsDiv && commentBtn) {
+        subscribeToBlogComments(blogId, (newComment) => {
+          const commentHtml = `
           <div class="text-sm text-gray-600 mb-1" data-comment-id="${newComment.id}">
             <strong>${newComment.username}:</strong> ${newComment.content}
             <span class="text-xs text-gray-500">${timeAgo(newComment.created_at)}</span>
           </div>
         `;
-                    commentsDiv.insertAdjacentHTML('afterbegin', commentHtml);
-                    const count = parseInt(commentBtn.textContent.trim().split(' ')[1]) + 1;
-                    commentBtn.innerHTML = `<span class="text-2xl">💬</span> ${count}`;
-                });
-                startBlogPolling(blogId, likeBtn, commentsDiv, commentBtn);
-            }
+          commentsDiv.insertAdjacentHTML('afterbegin', commentHtml);
+          const count = parseInt(commentBtn.textContent.trim().split(' ')[1]) + 1;
+          commentBtn.innerHTML = `<span class="text-2xl">💬</span> ${count}`;
+        });
+        startBlogPolling(blogId, likeBtn, commentsDiv, commentBtn);
+      }
 
-            if (loadMoreComments) {
-                loadMoreComments.addEventListener('click', async () => {
-                    const offset = parseInt(loadMoreComments.dataset.offset);
-                    const limit = 5;
-                    const { data: moreComments, error } = await supabase
-                        .from('blog_comments')
-                        .select('id, username, content, created_at')
-                        .eq('blog_id', blogId)
-                        .order('created_at', { ascending: false })
-                        .range(offset, offset + limit - 1);
-                    if (error) {
-                        console.error('Error loading more blog comments:', error);
-                        showToast('Failed to load more comments.', 'error');
-                        return;
-                    }
-                    if (commentsDiv && moreComments.length > 0) {
-                        moreComments.forEach(comment => {
-                            const commentHtml = `
+      if (loadMoreComments) {
+        loadMoreComments.addEventListener('click', async () => {
+          const offset = parseInt(loadMoreComments.dataset.offset);
+          const limit = 5;
+          const { data: moreComments, error } = await supabase
+            .from('blog_comments')
+            .select('id, username, content, created_at')
+            .eq('blog_id', blogId)
+            .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1);
+          if (error) {
+            console.error('Error loading more blog comments:', error);
+            showToast('Failed to load more comments.', 'error');
+            return;
+          }
+          if (commentsDiv && moreComments.length > 0) {
+            moreComments.forEach(comment => {
+              const commentHtml = `
               <div class="text-sm text-gray-600 mb-1" data-comment-id="${comment.id}">
                 <strong>${comment.username}:</strong> ${comment.content}
                 <span class="text-xs text-gray-500">${timeAgo(comment.created_at)}</span>
               </div>
             `;
-                            commentsDiv.insertAdjacentHTML('beforeend', commentHtml);
-                        });
-                        loadMoreComments.dataset.offset = (offset + moreComments.length).toString();
-                        if (moreComments.length < limit) {
-                            loadMoreComments.remove();
-                        }
-                    } else {
-                        loadMoreComments.remove();
-                    }
-                });
+              commentsDiv.insertAdjacentHTML('beforeend', commentHtml);
+            });
+            loadMoreComments.dataset.offset = (offset + moreComments.length).toString();
+            if (moreComments.length < limit) {
+              loadMoreComments.remove();
             }
+          } else {
+            loadMoreComments.remove();
+          }
+        });
+      }
 
-            window.addEventListener('popstate', () => {
-                stopBlogPolling(blogId);
-            }, { once: true });
-        }
+      window.addEventListener('popstate', () => {
+        stopBlogPolling(blogId);
+      }, { once: true });
     }
+  }
 
-    window.addEventListener('popstate', navigate);
+  window.addEventListener('popstate', navigate);
 
-    document.addEventListener('click', (e) => {
-        const link = e.target.closest('a');
-        if (link && link.href.startsWith(window.location.origin)) {
-            e.preventDefault();
-            const path = new URL(link.href).pathname;
-            history.pushState({}, '', path);
-            navigate();
-        }
-    });
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (link && link.href.startsWith(window.location.origin)) {
+      e.preventDefault();
+      const path = new URL(link.href).pathname;
+      history.pushState({}, '', path);
+      navigate();
+    }
+  });
 
-    navigate();
+  navigate();
 });
