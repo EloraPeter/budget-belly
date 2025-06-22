@@ -105,7 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
         .range(start, end);
 
       if (blogFilter.tag !== 'all') {
-query = query.contains('tags', [blogFilter.tag]);      }
+        query = query.contains('tags', [blogFilter.tag]);
+      }
 
       const { data: blogs, error } = await query;
       if (error) throw error;
@@ -259,8 +260,14 @@ query = query.contains('tags', [blogFilter.tag]);      }
       `)
         .eq('id', blogId)
         .single();
-      if (error) throw error;
-
+      if (error) {
+        console.error('Supabase error in loadBlogDetails:', error.message, error.details);
+        throw error;
+      }
+      if (!blog) {
+        console.warn('No blog found for ID:', blogId);
+        return null;
+      }
       return {
         ...blog,
         isLiked: blog.blog_likes ? blog.blog_likes.some(like => like.user_id === currentUserId) : false,
@@ -269,7 +276,7 @@ query = query.contains('tags', [blogFilter.tag]);      }
         comments: blog.blog_comments ? blog.blog_comments.slice(0, 5) : []
       };
     } catch (error) {
-      console.error('Error loading blog details:', error);
+      console.error('Error loading blog details for ID:', blogId, error);
       showToast('Failed to load blog details. Please try again.', 'error');
       return null;
     }
@@ -1592,17 +1599,17 @@ query = query.contains('tags', [blogFilter.tag]);      }
         });
       }
 
-     if (commentForm) {
-    commentForm.addEventListener('submit', e => {
-        e.preventDefault();
-        const input = commentForm.querySelector('input');
-        const content = input.value.trim();
-        if (content) {
+      if (commentForm) {
+        commentForm.addEventListener('submit', e => {
+          e.preventDefault();
+          const input = commentForm.querySelector('input');
+          const content = input.value.trim();
+          if (content) {
             addBlogComment(e, blogId, input); // Pass event, blogId, and input
             input.value = '';
-        }
-    });
-}
+          }
+        });
+      }
 
       if (commentsDiv && commentBtn) {
         subscribeToComments(recipeId, (newComment) => {
