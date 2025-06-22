@@ -1700,6 +1700,7 @@ document.addEventListener('DOMContentLoaded', () => {
           blogList.innerHTML = `<p class="text-center text-gray-600">No blogs available.</p>`;
           document.getElementById('load-more-blogs').classList.add('hidden');
         }
+        attachEventListeners(); // Ensure listeners are attached after rendering
       }
       renderBlogs();
       document.getElementById('load-more-blogs').addEventListener('click', () => {
@@ -1710,12 +1711,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-blog-id]').forEach(card => {
       card.addEventListener('click', (e) => {
-    if (e.target.closest('.blog-like-btn') || e.target.closest('.blog-comment-btn')) return;
-    const blogId = card.dataset.blogId;
-    console.log('Navigating to blog:', blogId); // Debug log
-    history.pushState({}, '', `/blog/${blogId}`);
-    navigate();
-});
+        if (e.target.closest('.blog-like-btn') || e.target.closest('.blog-comment-btn')) return;
+        const blogId = card.dataset.blogId;
+        console.log('Navigating to blog:', blogId); // Debug log
+        history.pushState({}, '', `/blog/${blogId}`);
+        navigate();
+      });
     });
 
     document.querySelectorAll('.blog-like-btn').forEach(btn => {
