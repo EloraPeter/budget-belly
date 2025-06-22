@@ -1741,6 +1741,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    document.querySelectorAll('.blog-comment-form').forEach(form => {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const blogId = form.dataset.blogId;
+        const input = form.querySelector('input');
+        const success = await addBlogComment(e, blogId, input);
+        if (success) {
+          // Re-render blogs to show new comment
+          renderBlogs();
+        }
+      });
+    });
+
     document.querySelectorAll('[data-blog-id]').forEach(card => {
       card.addEventListener('click', (e) => {
         if (e.target.closest('.blog-like-btn') || e.target.closest('.blog-comment-btn')) return;
