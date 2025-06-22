@@ -1716,7 +1716,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.addEventListener('click', (e) => {
         if (e.target.closest('.blog-like-btn') || e.target.closest('.blog-comment-btn')) return;
         const blogId = card.dataset.blogId;
-        console.log('Navigating to blog:', blogId); // Debug log
+        console.log('Clicked blog card, navigating to:', blogId); // Debug        
         history.pushState({}, '', `/blog/${blogId}`);
         navigate();
       });
