@@ -134,12 +134,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
       }
 
-      const { error } = await supabase.from('blog_comments').insert({
+      const { error } = await supabase
+      .from('blog_comments')
+      .insert({
         blog_id: blogId,
         user_id: currentUserId,
         content
       });
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding comment:', error);
+        showToast('Failed to post comment', 'error');
+      }
 
       showToast('Comment added successfully!', 'success');
       input.value = '';
